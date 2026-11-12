@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81a0cc56a10ef9348b30a486decd853e, type: 3}
+  m_Name: IslandDefinition
+  m_EditorClassIdentifier: Assembly-CSharp::IslandDefinition
+  _blockSize: 8
+  _blocks:
+  - _id: Center
+    _cell: {x: 0, y: 0}
+    _startState: 0
+    _treeSlotOffsets:
+    - {x: -2, y: -2}
+    - {x: 2, y: -2}
+    - {x: -2, y: 2}
+    - {x: 2, y: 2}
+  - _id: North
+    _cell: {x: 0, y: 1}
+    _startState: 0
+    _treeSlotOffsets:
+    - {x: -2, y: -2}
+    - {x: 2, y: -2}
+    - {x: -2, y: 2}
+    - {x: 2, y: 2}
+  - _id: East
+    _cell: {x: 1, y: 0}
+    _startState: 0
+    _treeSlotOffsets:
+    - {x: -2, y: -2}
+    - {x: 2, y: -2}
+    - {x: -2, y: 2}
+    - {x: 2, y: 2}
+  - _id: South
+    _cell: {x: 0, y: -1}
+    _startState: 0
+    _treeSlotOffsets:
+    - {x: -2, y: -2}
+    - {x: 2, y: -2}
+    - {x: -2, y: 2}
+    - {x: 2, y: 2}
+  - _id: West
+    _cell: {x: -1, y: 0}
+    _startState: 0
+    _treeSlotOffsets:
+    - {x: -2, y: -2}
+    - {x: 2, y: -2}
+    - {x: -2, y: 2}
+    - {x: 2, y: 2}
