@@ -25,7 +25,7 @@ public class TileHover : MonoBehaviour
         Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
         BlockView hit = null;
 
-        if (Physics.Raycast(ray, out RaycastHit info, 500f, _tileLayers))
+        if (Physics.Raycast(ray, out RaycastHit info, 500f, _tileLayers, QueryTriggerInteraction.Ignore))
             hit = _island.GetViewFromCollider(info.collider);
 
         SetHovered(hit);

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BlockView : MonoBehaviour
@@ -12,8 +13,16 @@ public class BlockView : MonoBehaviour
     [SerializeField] private Collider _tileCollider;
     public Collider TileCollider => _tileCollider;
 
+    public Renderer TileRenderer => _tileRenderer;
+    
     private GridBlockData _data;
     private MaterialPropertyBlock _propertyBlock;
+
+    // Empty child Transforms placed in the prefab, one per tree node slot.
+    [SerializeField] private Transform _slotsRoot;
+    private Transform[] _slots;
+
+    public IReadOnlyList<Transform> Slots => _slots;
 
     public GridBlockData Data => _data;
 
@@ -54,5 +63,13 @@ public class BlockView : MonoBehaviour
         if (_isHighlighted == highlighted) return;
         _isHighlighted = highlighted;
         ApplyColor();
+    }
+
+    private void Awake()
+    {
+        int count = _slotsRoot != null ? _slotsRoot.childCount : 0;
+        _slots = new Transform[count];
+        for (int i = 0; i < count; i++)
+            _slots[i] = _slotsRoot.GetChild(i);
     }
 }

@@ -4,8 +4,6 @@ using UnityEngine;
 public class GridBlockData
 {
     public string Id { get; }
-    public Vector2Int Cell { get; }
-    public Vector2[] TreeSlotOffsets { get; }
     public GridState State { get; private set; }
 
     public event Action<GridBlockData> OnStateChanged;
@@ -13,8 +11,6 @@ public class GridBlockData
     public GridBlockData(GridBlockDefinition definition)
     {
         Id = definition.Id;
-        Cell = definition.Cell;
-        TreeSlotOffsets = definition.TreeSlotOffsets;
         State = definition.StartState;
     }
 

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7626608388747191610}
   - component: {fileID: 4250336686463696184}
+  - component: {fileID: 1245364605471703462}
   m_Layer: 0
   m_Name: BlockView
   m_TagString: Untagged
@@ -50,6 +51,19 @@ MonoBehaviour:
   _cleanColor: {r: 0.35, g: 0.7, b: 0.3, a: 1}
   _highlightAmount: 0.35
   _tileCollider: {fileID: 8975896350346079273}
+--- !u!114 &1245364605471703462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2536272469460299789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 407ca04c50991fe4a9a7ccbb33da4474, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GridInteractable
+  _cleanDuration: 3
 --- !u!1 &2612681644632366619
 GameObject:
   m_ObjectHideFlags: 0

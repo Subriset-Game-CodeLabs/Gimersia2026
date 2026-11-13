@@ -1,0 +1,39 @@
+using UnityEngine;
+
+public class GridInteractable : MonoBehaviour, IInteractable
+{
+    // TODO(balance): placeholder cleaning time in seconds.
+    [SerializeField] private float _cleanDuration = 3f;
+
+    private GridBlockData _block;
+    private float _progress;
+    private BlockView _view;
+
+    private void Awake()
+    {
+        // Cached once; the spawner calls Initialize after this runs.
+        _view = GetComponent<BlockView>();
+    }
+
+    public Vector3 InteractionPoint => _view.TileRenderer.bounds.center;
+
+    // Only Corrupted blocks need work.
+    public bool CanInteract => _block != null && _block.State == GridState.Corrupted;
+
+    // Called by IslandSpawner right after the view is created.
+    public void Initialize(GridBlockData block)
+    {
+        _block = block;
+        _progress = 0f;
+    }
+
+    public void Interact(SpiritController spirit, float deltaTime)
+    {
+        _progress += deltaTime;
+        if (_progress >= _cleanDuration)
+        {
+            // BlockView listens to OnStateChanged and recolors itself.
+            _block.SetState(GridState.Clean);
+        }
+    }
+}
