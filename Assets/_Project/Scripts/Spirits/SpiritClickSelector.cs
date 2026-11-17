@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public class SpiritClickSelector : MonoBehaviour
@@ -30,6 +31,8 @@ public class SpiritClickSelector : MonoBehaviour
 
     private void OnClick(InputAction.CallbackContext context)
     {
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+        
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 

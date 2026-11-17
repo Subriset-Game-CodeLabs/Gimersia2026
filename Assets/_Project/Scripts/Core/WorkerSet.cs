@@ -23,7 +23,7 @@ public class WorkerSet
 
     public void Remove(SpiritController spirit)
     {
-        if (_workers.Remove(spirit));
+        _workers.Remove(spirit);
     }
 
     // Work one spirit adds this frame. All workers together add deltaTime * multiplier.
