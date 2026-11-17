@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1429b14507f433243820c71be263c448, type: 3}
   m_Name: Phase Settings
   m_EditorClassIdentifier: Assembly-CSharp::PhaseSettings
-  _dayDuration: 10
-  _nightDuration: 5
+  _dayDuration: 3
+  _nightDuration: 3
   _totalDays: 2
