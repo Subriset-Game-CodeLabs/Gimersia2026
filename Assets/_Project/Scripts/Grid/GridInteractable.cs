@@ -8,6 +8,7 @@ public class GridInteractable : MonoBehaviour, IInteractable
     private GridBlockData _block;
     private float _progress;
     private BlockView _view;
+    private WorkerSet _workers;
 
     private void Awake()
     {
@@ -21,15 +22,19 @@ public class GridInteractable : MonoBehaviour, IInteractable
     public bool CanInteract => _block != null && _block.State == GridState.Corrupted;
 
     // Called by IslandSpawner right after the view is created.
-    public void Initialize(GridBlockData block)
+    public void Initialize(GridBlockData block, TeamworkSettings teamwork)
     {
         _block = block;
         _progress = 0f;
+        _workers = new WorkerSet(teamwork);
     }
+
+    public void AddWorker(SpiritController spirit) => _workers.Add(spirit);
+    public void RemoveWorker(SpiritController spirit) => _workers.Remove(spirit);
 
     public void Interact(SpiritController spirit, float deltaTime)
     {
-        _progress += deltaTime;
+        _progress += _workers.GetShare(deltaTime);
         if (_progress >= _cleanDuration)
         {
             // BlockView listens to OnStateChanged and recolors itself.

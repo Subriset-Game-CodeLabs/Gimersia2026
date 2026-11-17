@@ -37,7 +37,6 @@ public class SpiritClickSelector : MonoBehaviour
 
         // Collide: the spirit's click collider is a trigger.
         if (!Physics.Raycast(ray, out RaycastHit hit, _maxDistance, ~0, QueryTriggerInteraction.Collide)) return;
-
         SpiritView spirit = hit.collider.GetComponentInParent<SpiritView>();
         if (spirit != null)
         {

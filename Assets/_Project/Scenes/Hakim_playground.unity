@@ -474,6 +474,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1948477041}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1294653352
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1294653354}
+  - component: {fileID: 1294653353}
+  m_Layer: 0
+  m_Name: TestTree
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1294653353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1294653352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c33f5da3b425704bb0d14676f0c568c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Test
+  _definitions:
+  - {fileID: 11400000, guid: 4396584df1a44074eaf18bc612856f0f, type: 2}
+  - {fileID: 11400000, guid: 4d367e1af215e6c40accf553c50059d9, type: 2}
+--- !u!4 &1294653354
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1294653352}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.44652, y: 0, z: -0.35216}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1642351140
 GameObject:
   m_ObjectHideFlags: 0
@@ -632,6 +679,9 @@ MonoBehaviour:
   _definition: {fileID: 11400000, guid: 67f2efbfb457d3441942f8a092007cbe, type: 2}
   _slotMarkerPrefab: {fileID: 1234818536502709904, guid: b9824344701cfea4f8fedea29b8f6be2, type: 3}
   _blocksParent: {fileID: 1261826051}
+  _treePrefab: {fileID: 3697809676261520579, guid: 74550403e4fb5ac4a80fd5eb8814d607, type: 3}
+  _tunasDefinition: {fileID: 11400000, guid: 4d367e1af215e6c40accf553c50059d9, type: 2}
+  _tumbangDefinition: {fileID: 11400000, guid: 4396584df1a44074eaf18bc612856f0f, type: 2}
 --- !u!4 &1948477041
 Transform:
   m_ObjectHideFlags: 0
@@ -799,7 +849,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2b38599b356899469de4a3751c1d4b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IsometricCameraRig
-  _definition: {fileID: 11400000, guid: 67f2efbfb457d3441942f8a092007cbe, type: 2}
+  _island: {fileID: 1948477040}
   _angles: {x: 30, y: 45}
   _distance: 60
   _padding: 4
@@ -827,3 +877,4 @@ SceneRoots:
   - {fileID: 659813558}
   - {fileID: 265467709}
   - {fileID: 1642351145}
+  - {fileID: 1294653354}

@@ -12,4 +12,8 @@ public interface IInteractable
     // Called every frame while a spirit works here. Progress lives in the target,
     // so several spirits can share one target later.
     void Interact(SpiritController spirit, float deltaTime);
+
+    // Called once when a spirit arrives and starts working, and once when it stops.
+    void AddWorker(SpiritController spirit);
+    void RemoveWorker(SpiritController spirit);
 }

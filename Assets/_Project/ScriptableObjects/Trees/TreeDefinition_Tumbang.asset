@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce40e5eb6ca7ac74f994ee1ac3544f12, type: 3}
+  m_Name: TreeDefinition_Tumbang
+  m_EditorClassIdentifier: Assembly-CSharp::TreeDefinition
+  _type: 1
+  _maxHp: 100
+  _phase1Duration: 6
+  _phase2Duration: 6
+  _elementPower: 15
