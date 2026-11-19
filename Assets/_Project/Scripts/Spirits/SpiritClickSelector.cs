@@ -39,7 +39,7 @@ public class SpiritClickSelector : MonoBehaviour
 
         Vector2 screenPosition = mouse.position.ReadValue();
         _treeElementMenu.Close();
-        Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
+        Ray ray = _camera.ScreenPointToRay(screenPosition);
 
         // Collide: the spirit's click collider is a trigger.
         if (!Physics.Raycast(ray, out RaycastHit hit, _maxDistance, ~0, QueryTriggerInteraction.Collide)) return;
@@ -47,6 +47,13 @@ public class SpiritClickSelector : MonoBehaviour
         if (spirit != null)
         {
             _selection.SelectOnly(spirit);
+            return;
+        }
+        EnemyController enemy = hit.collider.GetComponentInParent<EnemyController>();
+        if (enemy != null)
+        {
+            if (enemy.IsAlive && _island.TryGetBounds(out Bounds islandBounds))
+                _commander.AttackSelected(enemy, islandBounds);
             return;
         }
 
@@ -59,7 +66,10 @@ public class SpiritClickSelector : MonoBehaviour
             }
             else
             {
-                TreeInteractable work = tree.GetComponent<TreeInteractable>();
+                // Repair a damaged sapling before continuing its growth.
+                IInteractable work = tree.Data.NeedsHealing
+                    ? (IInteractable)tree.GetComponent<TreeHealInteractable>()
+                    : tree.GetComponent<TreeInteractable>();
                 if (work != null && work.CanInteract)
                     _commander.InteractSelected(work);
             }

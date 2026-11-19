@@ -34,7 +34,7 @@ public class PhaseHud : MonoBehaviour
     private void Update()
     {
         // Only the countdown needs a per-frame read. Everything else is event-driven.
-        if (_phases.CurrentPhase == PhaseType.Finished) return;
+        if (_phases.CurrentPhase != PhaseType.Day) return;
 
         int seconds = Mathf.CeilToInt(_phases.TimeRemaining);
         if (seconds == _shownSeconds) return;
@@ -53,6 +53,7 @@ public class PhaseHud : MonoBehaviour
     private void HandleNightStart(int night)
     {
         _phaseText.text = $"Night {night} / {_phases.TotalDays}";
+        _timerText.text = "Defeat all enemies";
         // The button is only valid during the day.
         _startNightButton.interactable = false;
         _shownSeconds = -1;
@@ -61,7 +62,7 @@ public class PhaseHud : MonoBehaviour
     private void HandleRunFinished()
     {
         _phaseText.text = "Run finished";
-        _timerText.text = "00:00";
+        _timerText.text = "";
         _startNightButton.interactable = false;
     }
 }

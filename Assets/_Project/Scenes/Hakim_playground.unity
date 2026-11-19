@@ -730,7 +730,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Work
+  m_text: Heal
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1830,6 +1830,7 @@ MonoBehaviour:
   _waterButton: {fileID: 1687009704}
   _fireButton: {fileID: 124619168}
   _lightningButton: {fileID: 1130574603}
+  _healButton: {fileID: 1717473388}
   _closeButton: {fileID: 714063820}
   _commander: {fileID: 265467710}
   _selection: {fileID: 265467708}
@@ -3202,7 +3203,7 @@ GameObject:
   - component: {fileID: 1717473389}
   - component: {fileID: 1717473388}
   m_Layer: 5
-  m_Name: WorkButton
+  m_Name: HealButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

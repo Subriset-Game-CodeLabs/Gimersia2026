@@ -5,25 +5,40 @@ public class ElementSettings : ScriptableObject
 {
     [SerializeField] private int _basePower = 10;
     [SerializeField] private int _powerPerBonusStep = 10;
-    // TODO(balance): these bonus values and the cooldown are not final.
+    // TODO(balance): these bonus values and reassignment duration are not final.
     [SerializeField] private float _attackSpeedBonusPerStep = 0.05f;
+    [SerializeField] private float _damageBonusPerStep = 0.05f;
     [SerializeField] private float _growthTimeReductionPerStep = 0.05f;
     [SerializeField] private float _minimumGrowthTimeMultiplier = 0.1f;
-    [SerializeField] private float _reassignmentDuration  = 3f;
+    [SerializeField] private float _reassignmentDuration = 3f;
     [SerializeField] private float _advantageDamageMultiplier = 2f;
     [SerializeField] private float _neutralDamageMultiplier = 1f;
     [SerializeField] private float _resistedDamageMultiplier = 0.5f;
     public int BasePower => _basePower;
-    public float ReassignmentDuration => Mathf.Max(0f, _reassignmentDuration );
+    public float ReassignmentDuration => Mathf.Max(0f, _reassignmentDuration);
     public float GetAttackSpeedMultiplier(int totalPower)
     {
         return 1f + BonusSteps(totalPower) * _attackSpeedBonusPerStep;
+    }
+    public float GetDamageBonusMultiplier(int totalPower)
+    {
+        return 1f + BonusSteps(totalPower) * _damageBonusPerStep;
     }
     public float GetGrowthTimeMultiplier(int totalPower)
     {
         return Mathf.Max(
             _minimumGrowthTimeMultiplier,
             1f - BonusSteps(totalPower) * _growthTimeReductionPerStep);
+    }
+    public ElementType GetCounterTo(ElementType defender)
+    {
+        switch (defender)
+        {
+            case ElementType.Fire: return ElementType.Water;
+            case ElementType.Lightning: return ElementType.Fire;
+            case ElementType.Water: return ElementType.Lightning;
+            default: return ElementType.None;
+        }
     }
     public float GetDamageMultiplier(ElementType attacker, ElementType defender)
     {

@@ -10,6 +10,7 @@ public class TreeData
 
     public bool IsAlive => Hp > 0f;
     public bool IsFullyGrown => Stage == TreeStage.Complete;
+    public bool NeedsHealing => IsAlive && Hp < Definition.MaxHp;
 
     public float ElementCooldownRemaining =>
             Element == ElementType.None ? 0f : Mathf.Max(0f, _nextElementChangeTime - Time.time);
@@ -51,6 +52,13 @@ public class TreeData
         Hp = Mathf.Max(0f, Hp - amount);
         OnHpChanged?.Invoke();
         if (!IsAlive) OnDied?.Invoke();
+    }
+
+    public void Heal(float amount)
+    {
+        if (!NeedsHealing || amount <= 0f) return;
+        Hp = Mathf.Min(Definition.MaxHp, Hp + amount);
+        OnHpChanged?.Invoke();
     }
 
     public bool CompleteReassignment(ElementType element)

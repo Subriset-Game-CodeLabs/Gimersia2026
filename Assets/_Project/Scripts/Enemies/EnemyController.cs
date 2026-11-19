@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum EnemyState { Idle, Moving, Attacking }
@@ -7,7 +9,12 @@ public class EnemyController : MonoBehaviour
 {
     public EnemyDefinition Definition { get; private set; }
     public EnemyState State { get; private set; } = EnemyState.Idle;
+    public float Hp { get; private set; }
+    public bool IsAlive => Hp > 0f;
+    public int AttackerCount => _attackers.Count;
+    public event Action<EnemyController> OnDied;
 
+    private readonly List<SpiritController> _attackers = new List<SpiritController>();
     private TreeNode _target;
     private float _attackCooldown;
 
@@ -18,10 +25,12 @@ public class EnemyController : MonoBehaviour
     public void Initialize(EnemyDefinition definition)
     {
         Definition = definition;
+        Hp = definition != null ? definition.MaxHp : 0f;
         _target = null;
         _attackCooldown = 0f;
         _hasRangedStopPoint = false;
         _reachedRangedStopPoint = false;
+        _attackers.Clear();
         State = EnemyState.Idle;
     }
 
@@ -32,9 +41,33 @@ public class EnemyController : MonoBehaviour
         _hasRangedStopPoint = true;
     }
 
+    public void AddAttacker(SpiritController spirit)
+    {
+        if (spirit != null && IsAlive && !_attackers.Contains(spirit))
+            _attackers.Add(spirit);
+    }
+
+    public void RemoveAttacker(SpiritController spirit)
+    {
+        _attackers.Remove(spirit);
+    }
+
+    public void TakeDamage(float amount)
+    {
+        if (!IsAlive || amount <= 0f) return;
+
+        Hp = Mathf.Max(0f, Hp - amount);
+        if (IsAlive) return;
+
+        State = EnemyState.Idle;
+        enabled = false;
+        OnDied?.Invoke(this);
+        Destroy(gameObject);
+    }
+
     private void Update()
     {
-        if (Definition == null) return;
+        if (Definition == null || !IsAlive) return;
 
         if (Definition.ApproachType == EnemyApproachType.Ranged)
         {
@@ -92,7 +125,6 @@ public class EnemyController : MonoBehaviour
         {
             _attackCooldown = Definition.AttackInterval;
             _target.Data.TakeDamage(Definition.Damage);
-            Debug.Log($"[TEMP] Enemy hit tree, HP now {_target.Data.Hp}");
         }
     }
 

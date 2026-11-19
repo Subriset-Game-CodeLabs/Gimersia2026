@@ -21,4 +21,13 @@ public class SpiritCommander : MonoBehaviour
             if (controller != null) controller.Interact(target);
         }
     }
+
+    public void AttackSelected(EnemyController enemy, Bounds islandBounds)
+    {
+        foreach (SpiritView spirit in _selection.Selected)
+        {
+            SpiritController controller = spirit.GetComponent<SpiritController>();
+            if (controller != null) controller.Attack(enemy, islandBounds);
+        }
+    }
 }

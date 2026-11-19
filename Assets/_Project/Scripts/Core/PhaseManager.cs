@@ -45,7 +45,8 @@ public class PhaseManager : MonoBehaviour
             BeginDay(1);
         }
 
-        if (CurrentPhase == PhaseType.Finished) return;
+        // Nights end when the spawner reports the last enemy defeated.
+        if (CurrentPhase != PhaseType.Day) return;
 
         TimeRemaining -= Time.deltaTime;
         if (TimeRemaining <= 0f) AdvancePhase();
@@ -56,6 +57,12 @@ public class PhaseManager : MonoBehaviour
     {
         if (!CanStartNightEarly) return;
         BeginNight();
+    }
+
+    public void CompleteNight()
+    {
+        if (CurrentPhase != PhaseType.Night) return;
+        AdvancePhase();
     }
 
     private void AdvancePhase()
@@ -86,8 +93,8 @@ public class PhaseManager : MonoBehaviour
     private void BeginNight()
     {
         CurrentPhase = PhaseType.Night;
-        PhaseDuration = _settings.NightDuration;
-        TimeRemaining = PhaseDuration;
+        PhaseDuration = 0f;
+        TimeRemaining = 0f;
         OnNightStart?.Invoke(CurrentDay);
     }
 

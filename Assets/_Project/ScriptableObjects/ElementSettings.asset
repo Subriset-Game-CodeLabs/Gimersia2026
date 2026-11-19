@@ -15,9 +15,10 @@ MonoBehaviour:
   _basePower: 10
   _powerPerBonusStep: 10
   _attackSpeedBonusPerStep: 0.05
+  _damageBonusPerStep: 0.05
   _growthTimeReductionPerStep: 0
   _minimumGrowthTimeMultiplier: 0.1
-  _reassignmentCooldown: 3
+  _reassignmentDuration: 5
   _advantageDamageMultiplier: 2
   _neutralDamageMultiplier: 1
   _resistedDamageMultiplier: 0.5

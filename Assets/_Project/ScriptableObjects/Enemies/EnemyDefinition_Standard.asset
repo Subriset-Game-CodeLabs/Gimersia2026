@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ece83c593770984dbda1188a2b08ea0, type: 3}
   m_Name: EnemyDefinition_Standard
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
+  _approachType: 0
+  _element: 2
   _maxHp: 50
   _moveSpeed: 2
   _damage: 10

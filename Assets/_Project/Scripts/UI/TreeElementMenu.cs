@@ -11,7 +11,7 @@ public class TreeElementMenu : MonoBehaviour
     [SerializeField] private Button _waterButton;
     [SerializeField] private Button _fireButton;
     [SerializeField] private Button _lightningButton;
-    // [SerializeField] private Button _workButton;
+    [SerializeField] private Button _healButton;
     [SerializeField] private Button _closeButton;
     [SerializeField] private SpiritCommander _commander;
     [SerializeField] private SpiritSelection _selection;
@@ -24,7 +24,7 @@ public class TreeElementMenu : MonoBehaviour
         _waterButton.onClick.AddListener(ChooseWater);
         _fireButton.onClick.AddListener(ChooseFire);
         _lightningButton.onClick.AddListener(ChooseLightning);
-        // _workButton.onClick.AddListener(Work);
+        _healButton.onClick.AddListener(Heal);
         _closeButton.onClick.AddListener(Close);
         _panel.gameObject.SetActive(false);
     }
@@ -39,11 +39,14 @@ public class TreeElementMenu : MonoBehaviour
         if (_registry != null)
             _registry.OnPowerChanged -= Refresh;
         if (_tree != null)
+        {
             _tree.OnAvailabilityChanged -= HandleTreeAvailabilityChanged;
+            _tree.Data.OnHpChanged -= Refresh;
+        }
         _waterButton.onClick.RemoveListener(ChooseWater);
         _fireButton.onClick.RemoveListener(ChooseFire);
         _lightningButton.onClick.RemoveListener(ChooseLightning);
-        // _workButton.onClick.RemoveListener(Work);
+        _healButton.onClick.RemoveListener(Heal);
         _closeButton.onClick.RemoveListener(Close);
     }
     public void Open(TreeNode tree, Vector2 screenPosition)
@@ -54,6 +57,7 @@ public class TreeElementMenu : MonoBehaviour
         Close();
         _tree = tree;
         _tree.OnAvailabilityChanged += HandleTreeAvailabilityChanged;
+        _tree.Data.OnHpChanged += Refresh;
         _feedback = "";
         RectTransform canvasRect = (RectTransform)_canvas.transform;
         Camera uiCamera = _canvas.renderMode == RenderMode.ScreenSpaceOverlay
@@ -74,7 +78,10 @@ public class TreeElementMenu : MonoBehaviour
     public void Close()
     {
         if (_tree != null)
+        {
             _tree.OnAvailabilityChanged -= HandleTreeAvailabilityChanged;
+            _tree.Data.OnHpChanged -= Refresh;
+        }
         _tree = null;
         _panel.gameObject.SetActive(false);
     }
@@ -118,12 +125,24 @@ public class TreeElementMenu : MonoBehaviour
         _commander.InteractSelected(work);
         Close();
     }
-    private void Work()
+    private void Heal()
     {
         if (_tree == null) return;
-        TreeInteractable interactable = _tree.GetComponent<TreeInteractable>();
-        if (interactable != null && interactable.CanInteract)
-            _commander.InteractSelected(interactable);
+        if (_selection == null || _selection.Selected.Count == 0)
+        {
+            _feedback = "Select a spirit to heal this tree";
+            Refresh();
+            return;
+        }
+
+        TreeHealInteractable work = _tree.GetComponent<TreeHealInteractable>();
+        if (work == null || !work.CanInteract)
+        {
+            _feedback = "Tree does not need healing";
+            Refresh();
+            return;
+        }
+        _commander.InteractSelected(work);
         Close();
     }
     private void HandleTreeAvailabilityChanged(TreeNode tree)
@@ -137,9 +156,12 @@ public class TreeElementMenu : MonoBehaviour
     {
         if (_tree == null || !_panel.gameObject.activeSelf) return;
         _statusText.text =
-            $"Tree: {_tree.Data.Element}\n{_feedback}";
-        //_workButton.interactable =
-        //    _tree.GetComponent<TreeInteractable>().CanInteract;
+            $"Tree: {_tree.Data.Element}\n" +
+            $"HP: {_tree.Data.Hp:0}/{_tree.Data.Definition.MaxHp:0}\n" +
+            _feedback;
+        _healButton.interactable =
+            _tree.Data.NeedsHealing &&
+            _selection != null && _selection.Selected.Count > 0;
         if (_registry == null) return;
         _powerText.text =
             $"Water: {_registry.GetTotalPower(ElementType.Water)}\n" +

@@ -44,6 +44,7 @@ GameObject:
   - component: {fileID: 3697809676261520579}
   - component: {fileID: 5522076348871963303}
   - component: {fileID: 4858340165448009468}
+  - component: {fileID: 9210402247088107656}
   m_Layer: 0
   m_Name: Tree_Node
   m_TagString: Untagged
@@ -119,6 +120,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b408e4bf5f7fde34299fdd2852888152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TreeInteractable
+--- !u!114 &9210402247088107656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4369640317534745405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d4f2c6df9d2226499c7869ced6f0461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TreeHealInteractable
+  _teamworkSettings: {fileID: 11400000, guid: 262761ec0639e8a47a0b3954b51ad648, type: 2}
+  _hpPerSecond: 10
+  _nightSpeedMultiplier: 0.5
 --- !u!1 &6643941681798036935
 GameObject:
   m_ObjectHideFlags: 0

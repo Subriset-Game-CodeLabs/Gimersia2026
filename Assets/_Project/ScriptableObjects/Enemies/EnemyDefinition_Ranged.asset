@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: EnemyDefinition_Ranged
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
   _approachType: 1
+  _element: 1
   _maxHp: 50
   _moveSpeed: 8
   _damage: 10

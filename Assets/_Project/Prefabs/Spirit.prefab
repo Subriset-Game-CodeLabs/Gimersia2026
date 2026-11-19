@@ -266,3 +266,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpiritController
   _moveSpeed: 4
   _arriveDistance: 0.05
+  _combatSettings: {fileID: 11400000, guid: 6c8fdfb0428eb5943ac006cc82f0cbbc, type: 2}
