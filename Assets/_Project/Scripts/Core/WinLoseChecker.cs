@@ -46,7 +46,21 @@ public class WinLoseChecker : MonoBehaviour
         if (Result != RunResult.Playing) return;
         Result = result;
         Debug.Log($"[Run] Result: {result}");
-        Time.timeScale = 0f; // TODO: replace with a proper end screen and restart.
+        Time.timeScale = 0f; // ResultHud displays the end screen; SceneFlow restores timeScale on restart/menu.
         OnResult?.Invoke(result);
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Debug/Force Win")]
+    private void DebugForceWin()
+    {
+        if (Application.isPlaying) Finish(RunResult.Won);
+    }
+
+    [ContextMenu("Debug/Force Lose")]
+    private void DebugForceLose()
+    {
+        if (Application.isPlaying) Finish(RunResult.Lost);
+    }
+#endif
 }
