@@ -6,6 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/_Project/Scenes/MainMenu.unity
+    guid: f8f3bfd4c65e77447871b9eb70f6b482
+  - enabled: 1
+    path: Assets/_Project/Scenes/Hakim_playground.unity
+    guid: 46707dc7f0e93154a9d738d45429f7fb
+  - enabled: 1
     path: Assets/_Project/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   m_configObjects:
