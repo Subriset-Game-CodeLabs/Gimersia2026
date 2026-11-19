@@ -5,10 +5,12 @@ using UnityEngine.SceneManagement;
 public static class SceneFlow
 {
     public const string MainMenuScene = "MainMenu";
+    public const string LevelSelectionScene = "LevelSelection";
     // TODO: point this at the final gameplay scene once it replaces the playground.
     public const string GameplayScene = "Hakim_playground";
 
     public static void LoadMainMenu() => Load(MainMenuScene);
+    public static void LoadLevelSelection() => Load(LevelSelectionScene);
 
     public static void Load(string sceneName)
     {
