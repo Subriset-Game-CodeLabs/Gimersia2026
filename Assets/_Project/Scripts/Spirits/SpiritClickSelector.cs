@@ -8,6 +8,7 @@ public class SpiritClickSelector : MonoBehaviour
     [SerializeField] private SpiritSelection _selection;
     [SerializeField] private SpiritCommander _commander;
     [SerializeField] private IslandSpawner _island;
+    [SerializeField] private TreeElementMenu _treeElementMenu;
     [SerializeField] private float _maxDistance = 200f;
 
     private Camera _camera;
@@ -32,10 +33,12 @@ public class SpiritClickSelector : MonoBehaviour
     private void OnClick(InputAction.CallbackContext context)
     {
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
-        
+
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
+        Vector2 screenPosition = mouse.position.ReadValue();
+        _treeElementMenu.Close();
         Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
 
         // Collide: the spirit's click collider is a trigger.
@@ -44,6 +47,22 @@ public class SpiritClickSelector : MonoBehaviour
         if (spirit != null)
         {
             _selection.SelectOnly(spirit);
+            return;
+        }
+
+        TreeNode tree = hit.collider.GetComponentInParent<TreeNode>();
+        if (tree != null && tree.IsTargetable)
+        {
+            if (tree.Data.IsFullyGrown)
+            {
+                _treeElementMenu.Open(tree, screenPosition);
+            }
+            else
+            {
+                TreeInteractable work = tree.GetComponent<TreeInteractable>();
+                if (work != null && work.CanInteract)
+                    _commander.InteractSelected(work);
+            }
             return;
         }
 

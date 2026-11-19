@@ -3,23 +3,32 @@ using UnityEngine;
 public class Test : MonoBehaviour
 {
     [SerializeField] private TreeDefinition[] _definitions;
+    [SerializeField] private ElementSettings _elementSettings;
 
     [ContextMenu("Test: Tree Data")]
     private void Run()
     {
-        foreach (var def in _definitions)
+        if (_elementSettings == null)
         {
-            var tree = new TreeData(def);
-            tree.OnStageChanged += () => Debug.Log($"{def.Type} stage -> {tree.Stage}");
-            tree.OnElementChanged += () => Debug.Log($"{def.Type} element -> {tree.Element}");
+            Debug.LogError("Assign ElementSettings to the tree data test.", this);
+            return;
+        }
 
-            Debug.Log($"{def.Type}: hp {tree.Hp}, alive {tree.IsAlive}, stage {tree.Stage}, element {tree.Element}, " +
-                      $"phase1 {def.GetPhaseDuration(TreeStage.Initial)}s, phase2 {def.GetPhaseDuration(TreeStage.Intermediate)}s");
+        foreach (TreeDefinition definition in _definitions)
+        {
+            TreeData tree = new TreeData(definition);
+            tree.OnStageChanged += () =>
+                Debug.Log($"{definition.Type} stage -> {tree.Stage}");
+            tree.OnElementChanged += () =>
+                Debug.Log($"{definition.Type} element -> {tree.Element}");
 
-            tree.SetElement(ElementType.Fire);
+            tree.TryAssignElement(ElementType.Fire, _elementSettings);
             tree.SetStage(TreeStage.Intermediate);
             tree.SetStage(TreeStage.Complete);
-            Debug.Log($"{def.Type}: fully grown {tree.IsFullyGrown}");
+
+            Debug.Log(
+                $"{definition.Type}: hp {tree.Hp}, alive {tree.IsAlive}, " +
+                $"stage {tree.Stage}, element {tree.Element}");
         }
     }
 }

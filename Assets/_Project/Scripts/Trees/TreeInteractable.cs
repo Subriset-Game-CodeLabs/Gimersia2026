@@ -40,13 +40,20 @@ public class TreeInteractable : MonoBehaviour, IInteractable
     public void Interact(SpiritController spirit, float deltaTime)
     {
         if (!CanInteract) return;
-
         _progress += _workers.GetShare(deltaTime);
-        float duration = _node.Data.Definition.GetPhaseDuration(_node.Data.Stage);
-        if (_progress < duration) return;
-
-        // Carry no leftover into the next stage: keeps the phases simple.
+        if (_progress < GetCurrentDuration()) return;
         _progress = 0f;
         _node.Data.SetStage(_node.Data.Stage + 1);
+    }
+
+    private float GetCurrentDuration()
+    {
+        float baseDuration =
+            _node.Data.Definition.GetPhaseDuration(_node.Data.Stage);
+        TreeRegistry registry = TreeRegistry.Instance;
+        float multiplier = registry != null
+            ? registry.GetGrowthTimeMultiplier(_node.Data.Element)
+            : 1f;
+        return baseDuration * multiplier;
     }
 }

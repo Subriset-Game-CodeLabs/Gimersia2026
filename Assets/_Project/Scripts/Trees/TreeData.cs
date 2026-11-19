@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public class TreeData
 {
@@ -9,6 +10,10 @@ public class TreeData
 
     public bool IsAlive => Hp > 0f;
     public bool IsFullyGrown => Stage == TreeStage.Complete;
+
+    public float ElementCooldownRemaining =>
+            Element == ElementType.None ? 0f : Mathf.Max(0f, _nextElementChangeTime - Time.time);
+    private float _nextElementChangeTime;
 
     // Events instead of polling, so views and later systems just subscribe.
     public event Action OnStageChanged;
@@ -27,10 +32,35 @@ public class TreeData
         OnStageChanged?.Invoke();
     }
 
-    public void SetElement(ElementType element)
+    public bool TryAssignElement(ElementType element, ElementSettings settings)
     {
-        if (Element == element) return;
+        if (settings == null || !IsAlive || !IsFullyGrown ||
+            Element != ElementType.None || element == ElementType.None)
+            return false;
         Element = element;
         OnElementChanged?.Invoke();
+        return true;
+    }
+
+    public event Action OnDied;
+    public event Action OnHpChanged; // ready for a health bar later
+
+    public void TakeDamage(float amount)
+    {
+        if (!IsAlive || amount <= 0f) return;
+        Hp = Mathf.Max(0f, Hp - amount);
+        OnHpChanged?.Invoke();
+        if (!IsAlive) OnDied?.Invoke();
+    }
+
+    public bool CompleteReassignment(ElementType element)
+    {
+        if (!IsAlive || !IsFullyGrown ||
+            Element == ElementType.None ||
+            element == ElementType.None || element == Element)
+            return false;
+        Element = element;
+        OnElementChanged?.Invoke();
+        return true;
     }
 }

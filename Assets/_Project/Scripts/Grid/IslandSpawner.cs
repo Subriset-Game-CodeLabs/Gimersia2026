@@ -102,6 +102,10 @@ public class IslandSpawner : MonoBehaviour
             var node = Instantiate(_treePrefab, slot.position, slot.rotation, slot);
             node.Initialize(definition);
             node.GetComponent<TreeInteractable>().Initialize(_teamworkSettings);
+            node.gameObject
+            .AddComponent<TreeElementInteractable>()
+            .Initialize(_teamworkSettings);
+            TreeRegistry.Instance.Register(node);
             nodes.Add(node);
             index++;
         }
