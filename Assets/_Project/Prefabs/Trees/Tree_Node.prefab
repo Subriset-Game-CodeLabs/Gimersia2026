@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 5522076348871963303}
   - component: {fileID: 4858340165448009468}
   - component: {fileID: 9210402247088107656}
+  - component: {fileID: 1815753296822961736}
   m_Layer: 0
   m_Name: Tree_Node
   m_TagString: Untagged
@@ -135,6 +136,23 @@ MonoBehaviour:
   _teamworkSettings: {fileID: 11400000, guid: 262761ec0639e8a47a0b3954b51ad648, type: 2}
   _hpPerSecond: 10
   _nightSpeedMultiplier: 0.5
+  _logHealing: 1
+--- !u!208 &1815753296822961736
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4369640317534745405}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.5, y: 0.92, z: 0.5}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 0
+  m_Center: {x: 0, y: 1.05, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &6643941681798036935
 GameObject:
   m_ObjectHideFlags: 0

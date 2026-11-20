@@ -13,5 +13,4 @@ MonoBehaviour:
   m_Name: Phase Settings
   m_EditorClassIdentifier: Assembly-CSharp::PhaseSettings
   _dayDuration: 90
-  _nightDuration: 60
-  _totalDays: 2
+  _totalDays: 7

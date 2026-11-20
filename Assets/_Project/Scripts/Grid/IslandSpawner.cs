@@ -4,22 +4,34 @@ using UnityEngine;
 public class IslandSpawner : MonoBehaviour
 {
     [SerializeField] private IslandDefinition _definition;
-    //[SerializeField] private BlockView _blockPrefab;
-    [SerializeField] private GameObject _slotMarkerPrefab;
     [SerializeField] private Transform _blocksParent;
 
     private readonly Dictionary<Collider, BlockView> _viewsByCollider = new Dictionary<Collider, BlockView>();
+    private readonly Dictionary<Collider, IslandTile> _tilesByCollider = new Dictionary<Collider, IslandTile>();
     private readonly List<BlockView> _views = new List<BlockView>();
     public IslandData Data { get; private set; }
 
     [SerializeField] private TreeNode _treePrefab;
-    [SerializeField] private TreeDefinition _tunasDefinition;
-    [SerializeField] private TreeDefinition _tumbangDefinition;
+
 
     [SerializeField] private TeamworkSettings _teamworkSettings;
 
     private void Awake()
     {
+        if (_definition == null)
+        {
+            Debug.LogError("IslandSpawner needs this level's IslandDefinition.", this);
+            return;
+        }
+        var ids = new HashSet<string>();
+        foreach (GridBlockDefinition block in _definition.Blocks)
+        {
+            if (block == null || string.IsNullOrWhiteSpace(block.Id) || !ids.Add(block.Id))
+            {
+                Debug.LogError("IslandDefinition needs non-empty, unique block IDs.", _definition);
+                return;
+            }
+        }
         Data = new IslandData(_definition);
         SpawnBlocks();
     }
@@ -44,29 +56,18 @@ public class IslandSpawner : MonoBehaviour
             //initialize grid interactable 
             view.GetComponent<GridInteractable>()?.Initialize(block, _teamworkSettings);
 
-            if (view.TileCollider != null) _viewsByCollider[view.TileCollider] = view;
+            foreach (Collider collider in view.TileColliders)
+                if (collider != null) _viewsByCollider[collider] = view;
 
-            // Temporary: slot markers still use the old cell offsets until step 2.
-            // Vector3 center = _definition.CellToWorld(block.Cell);
-            // SpawnSlotMarkers(block, center, view.transform);
-
+            foreach (IslandTile tile in view.Tiles)
+                if (tile.ClickCollider != null) _tilesByCollider[tile.ClickCollider] = tile;
             SpawnTrees(view, block);
-            // SpawnSlotMarkers(block, view);
         }
     }
 
-    private void SpawnSlotMarkers(GridBlockData block, BlockView view)
+    public IslandTile GetTileFromCollider(Collider collider)
     {
-        if (_slotMarkerPrefab == null) return;
-
-        foreach (Transform slot in view.Slots)
-        {
-            // Placeholder only. The tree task will spawn trees at these same slots.
-            // Parented to the slot: the block root is unscaled now, so nothing stretches.
-            Vector3 pos = slot.position + Vector3.up * 0.1f; // half the cylinder height
-            GameObject marker = Instantiate(_slotMarkerPrefab, pos, Quaternion.identity, slot);
-            marker.name = $"SlotMarker_{block.Id}";
-        }
+        return collider != null && _tilesByCollider.TryGetValue(collider, out var tile) ? tile : null;
     }
 
     /// <summary>Finds the block view for a collider hit by a raycast. Returns null if none.</summary>
@@ -82,11 +83,9 @@ public class IslandSpawner : MonoBehaviour
 
         foreach (var view in _views)
         {
-            Renderer tile = view.TileRenderer;
-            if (tile == null) continue;
-
-            if (!found) { bounds = tile.bounds; found = true; }
-            else bounds.Encapsulate(tile.bounds);
+            if (!view.TryGetBounds(out Bounds blockBounds)) continue;
+            if (!found) { bounds = blockBounds; found = true; }
+            else bounds.Encapsulate(blockBounds);
         }
         return found;
     }
@@ -94,23 +93,29 @@ public class IslandSpawner : MonoBehaviour
     private void SpawnTrees(BlockView view, GridBlockData block)
     {
         var nodes = new List<TreeNode>();
-        int index = 0;
-        foreach (Transform slot in view.Slots)
+        foreach (IslandTile tile in view.Tiles)
         {
-            // TODO(balance): alternates types until per-slot data exists.
-            var definition = index % 2 == 0 ? _tunasDefinition : _tumbangDefinition;
-            var node = Instantiate(_treePrefab, slot.position, slot.rotation, slot);
-            node.Initialize(definition);
-            node.GetComponent<TreeInteractable>().Initialize(_teamworkSettings);
-            node.gameObject
-            .AddComponent<TreeElementInteractable>()
-            .Initialize(_teamworkSettings);
+            if (tile.TreeDefinition == null) continue;
+            if (_treePrefab == null || tile.TreePoint == null || tile.InteractionPoint == null || TreeRegistry.Instance == null)
+            {
+                Debug.LogError("Cannot spawn tree: assign Tree Prefab, TreeRegistry, Tree Point and Interaction Point.", tile);
+                continue;
+            }
+            Transform point = tile.TreePoint;
+            var node = Instantiate(_treePrefab, point.position, point.rotation, point);
+            node.SetInteractionPoint(tile.InteractionPoint);
+            node.Initialize(tile.TreeDefinition);
+            TreeInteractable growth = node.GetComponent<TreeInteractable>();
+            if (growth != null) growth.Initialize(_teamworkSettings);
+            else Debug.LogError("Tree Prefab needs TreeInteractable.", node);
+            TreeElementInteractable element = node.GetComponent<TreeElementInteractable>();
+            if (element == null) element = node.gameObject.AddComponent<TreeElementInteractable>();
+            element.Initialize(_teamworkSettings);
             TreeRegistry.Instance.Register(node);
+            tile.SetTree(node);
             nodes.Add(node);
-            index++;
         }
 
-        // Added at runtime so the five block prefabs don't need editing.
         view.gameObject.AddComponent<BlockTreeRevealer>().Initialize(block, nodes);
     }
 }

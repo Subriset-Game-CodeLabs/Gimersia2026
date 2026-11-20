@@ -13,8 +13,12 @@ public class TreeNode : MonoBehaviour
     public event Action<TreeNode> OnAvailabilityChanged;
 
     public bool IsRevealed { get; private set; }
-    public bool IsTargetable => IsRevealed && Data.IsAlive;
+    public bool IsTargetable => IsRevealed && Data != null && Data.IsAlive && gameObject.activeInHierarchy;
     public Vector3 TargetPoint => transform.position;
+    private Transform _interactionPoint;
+    public Vector3 InteractionPoint => _interactionPoint != null ? _interactionPoint.position : transform.position;
+
+    public void SetInteractionPoint(Transform point) => _interactionPoint = point;
 
     public void Initialize(TreeDefinition definition)
     {
@@ -33,7 +37,11 @@ public class TreeNode : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (Data != null) Data.OnStageChanged -= Refresh;
+        if (Data != null)
+        {
+            Data.OnStageChanged -= Refresh;
+            Data.OnDied -= HandleDied;
+        }
     }
 
     private void Refresh()

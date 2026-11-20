@@ -16,10 +16,10 @@ public class GridInteractable : MonoBehaviour, IInteractable
         _view = GetComponent<BlockView>();
     }
 
-    public Vector3 InteractionPoint => _view.TileRenderer.bounds.center;
+    public Vector3 InteractionPoint => _view.CleaningPoint;
 
     // Only Corrupted blocks need work.
-    public bool CanInteract => _block != null && _block.State == GridState.Corrupted;
+    public bool CanInteract => _block != null && _workers != null && _block.State == GridState.Corrupted;
 
     // Called by IslandSpawner right after the view is created.
     public void Initialize(GridBlockData block, TeamworkSettings teamwork)
@@ -34,6 +34,7 @@ public class GridInteractable : MonoBehaviour, IInteractable
 
     public void Interact(SpiritController spirit, float deltaTime)
     {
+        if (!CanInteract) return;
         _progress += _workers.GetShare(deltaTime);
         if (_progress >= _cleanDuration)
         {

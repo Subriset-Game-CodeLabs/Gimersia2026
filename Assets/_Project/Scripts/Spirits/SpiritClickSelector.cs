@@ -10,6 +10,7 @@ public class SpiritClickSelector : MonoBehaviour
     [SerializeField] private IslandSpawner _island;
     [SerializeField] private TreeElementMenu _treeElementMenu;
     [SerializeField] private float _maxDistance = 200f;
+    [SerializeField] private LayerMask _clickLayers = Physics.DefaultRaycastLayers;
 
     private Camera _camera;
 
@@ -38,11 +39,12 @@ public class SpiritClickSelector : MonoBehaviour
         if (mouse == null) return;
 
         Vector2 screenPosition = mouse.position.ReadValue();
-        _treeElementMenu.Close();
+        if (_treeElementMenu != null) _treeElementMenu.Close();
         Ray ray = _camera.ScreenPointToRay(screenPosition);
 
         // Collide: the spirit's click collider is a trigger.
-        if (!Physics.Raycast(ray, out RaycastHit hit, _maxDistance, ~0, QueryTriggerInteraction.Collide)) return;
+        if (!Physics.Raycast(ray, out RaycastHit hit, _maxDistance,
+            _clickLayers & Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide)) return;
         SpiritView spirit = hit.collider.GetComponentInParent<SpiritView>();
         if (spirit != null)
         {
@@ -57,12 +59,23 @@ public class SpiritClickSelector : MonoBehaviour
             return;
         }
 
+        // Dirty blocks consume the entire click and always share one cleaning target.
+        BlockView block = _island.GetViewFromCollider(hit.collider);
+        if (block != null && block.Data.State == GridState.Corrupted)
+        {
+            GridInteractable cleaning = block.GetComponent<GridInteractable>();
+            if (cleaning != null && cleaning.CanInteract) _commander.InteractSelected(cleaning);
+            return;
+        }
+
+        IslandTile tile = _island.GetTileFromCollider(hit.collider);
         TreeNode tree = hit.collider.GetComponentInParent<TreeNode>();
+        if (tree == null && tile != null && tile.IsSelectable) tree = tile.Tree;
         if (tree != null && tree.IsTargetable)
         {
             if (tree.Data.IsFullyGrown)
             {
-                _treeElementMenu.Open(tree, screenPosition);
+                if (_treeElementMenu != null) _treeElementMenu.Open(tree, screenPosition);
             }
             else
             {
@@ -76,18 +89,10 @@ public class SpiritClickSelector : MonoBehaviour
             return;
         }
 
-        // Interactables first: grids and (later) trees. Done targets fall through to a plain move.
-        IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
-        if (interactable != null && interactable.CanInteract)
+        // Never fall back to arbitrary ground hit positions or reserved tree tiles.
+        if (tile != null && tile.CanMoveTo)
         {
-            _commander.InteractSelected(interactable);
-            return;
-        }
-
-        // Only tiles are valid move targets.
-        if (_island.GetViewFromCollider(hit.collider) != null)
-        {
-            _commander.MoveSelectedTo(hit.point);
+            _commander.MoveSelectedTo(tile.MovementPoint);
         }
     }
 

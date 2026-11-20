@@ -26,13 +26,15 @@ public class TreeInteractable : MonoBehaviour, IInteractable
     // Called by IslandSpawner right after the node is created.
     public void Initialize(TeamworkSettings teamwork)
     {
+        _node = GetComponent<TreeNode>();
         _workers = new WorkerSet(teamwork);
     }
 
-    public Vector3 InteractionPoint => transform.position;
+    public Vector3 InteractionPoint => _node.InteractionPoint;
 
     // Hidden nodes are inactive, so they cannot be clicked. This covers the rest.
-    public bool CanInteract => _node.Data != null && _node.Data.IsAlive && !_node.Data.IsFullyGrown;
+    public bool CanInteract => _node != null && _node.Data != null && _node.IsTargetable &&
+        _workers != null && !_node.Data.IsFullyGrown;
 
     public void AddWorker(SpiritController spirit) => _workers.Add(spirit);
     public void RemoveWorker(SpiritController spirit) => _workers.Remove(spirit);
