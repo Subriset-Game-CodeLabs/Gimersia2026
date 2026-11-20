@@ -18,4 +18,7 @@ MonoBehaviour:
   _moveSpeed: 8
   _damage: 10
   _attackInterval: 1
-  _attackRange: 50
+  _attackRange: 10
+  _projectilePrefab: {fileID: 5151816241729244384, guid: ad18f86c9714734499401593aa3462e9, type: 3}
+  _projectileSpeed: 8
+  _projectileLifetime: 5

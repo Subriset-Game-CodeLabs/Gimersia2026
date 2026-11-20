@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 public class TileHover : MonoBehaviour
@@ -8,6 +9,7 @@ public class TileHover : MonoBehaviour
     [SerializeField] private LayerMask _tileLayers = ~0;
 
     private BlockView _hovered;
+    private IslandTile _hoveredTile;
 
     public BlockView Hovered => _hovered;
 
@@ -20,15 +22,29 @@ public class TileHover : MonoBehaviour
     {
         // Mouse.current is null if no mouse is connected.
         Mouse mouse = Mouse.current;
-        if (mouse == null) { SetHovered(null); return; }
+        if (mouse == null || _camera == null || _island == null ||
+            (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
+        {
+            SetHovered(null);
+            SetHoveredTile(null);
+            return;
+        }
 
         Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
         BlockView hit = null;
+        IslandTile tile = null;
 
-        if (Physics.Raycast(ray, out RaycastHit info, 500f, _tileLayers, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(ray, out RaycastHit info, 500f,
+            _tileLayers & Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
+        {
             hit = _island.GetViewFromCollider(info.collider);
+            if (hit != null && hit.Data.State != GridState.Corrupted) hit = null;
+            tile = _island.GetTileFromCollider(info.collider);
+            if (tile != null && !tile.IsSelectable) tile = null;
+        }
 
         SetHovered(hit);
+        SetHoveredTile(tile);
     }
 
     private void SetHovered(BlockView view)
@@ -39,8 +55,17 @@ public class TileHover : MonoBehaviour
         if (_hovered != null) _hovered.SetHighlighted(true);
     }
 
+    private void SetHoveredTile(IslandTile tile)
+    {
+        if (tile == _hoveredTile) return;
+        if (_hoveredTile != null) _hoveredTile.SetHighlighted(false);
+        _hoveredTile = tile;
+        if (_hoveredTile != null) _hoveredTile.SetHighlighted(true);
+    }
+
     private void OnDisable()
     {
         SetHovered(null);
+        SetHoveredTile(null);
     }
 }

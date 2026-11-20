@@ -150,37 +150,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1669123062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &13487380
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 13487381}
-  m_Layer: 0
-  m_Name: Spawn_S
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &13487381
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 13487380}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 4.37}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1727569854}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &36932448
 GameObject:
   m_ObjectHideFlags: 0
@@ -614,6 +583,9 @@ MonoBehaviour:
   _island: {fileID: 1948477040}
   _treeElementMenu: {fileID: 838127544}
   _maxDistance: 200
+  _clickLayers:
+    serializedVersion: 2
+    m_Bits: 55
 --- !u!114 &265467708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1242,15 +1214,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   _enemyPrefab: {fileID: 288938686289014693, guid: 55cc2ef2aefc19f4f82ff44844ca5c24, type: 3}
   _enemiesParent: {fileID: 1697611840}
-  _definition: {fileID: 11400000, guid: db08815d33e93d74fb0b56d0c5f8046a, type: 2}
-  _spawnPoints:
-  - {fileID: 2005209849}
-  - {fileID: 1436707463}
-  - {fileID: 13487381}
-  - {fileID: 796749540}
-  _rangedDefinition: {fileID: 11400000, guid: d17b8f2198399884091ceefc3721e6b8, type: 2}
-  _rangedSpawnPoint: {fileID: 1729403104}
-  _rangedStopPoint: {fileID: 3935944}
+  _spawnPointBindings:
+  - _id: Island_Test
+    _point: {fileID: 2005209849}
+  - _id: Offshore_Test
+    _point: {fileID: 1436707463}
+  _waves:
+  - {fileID: 11400000, guid: c03f9f1cecbf9e2478aedbf16c8d1923, type: 2}
 --- !u!4 &538230579
 Transform:
   m_ObjectHideFlags: 0
@@ -1433,7 +1403,7 @@ Transform:
   m_GameObject: {fileID: 659813556}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0}
+  m_LocalPosition: {x: -15, y: 0, z: -9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1657,37 +1627,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &796749539
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 796749540}
-  m_Layer: 0
-  m_Name: Spawn_W
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &796749540
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 796749539}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.06, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1727569854}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &838127538
 GameObject:
@@ -2708,7 +2647,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1436707463}
   m_Layer: 0
-  m_Name: Spawn_E
+  m_Name: Offshore_Test
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2723,7 +2662,7 @@ Transform:
   m_GameObject: {fileID: 1436707462}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5, y: 0, z: 0}
+  m_LocalPosition: {x: -19.9, y: 0, z: 25.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3285,8 +3224,6 @@ Transform:
   m_Children:
   - {fileID: 2005209849}
   - {fileID: 1436707463}
-  - {fileID: 13487381}
-  - {fileID: 796749540}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1729403103
@@ -3422,6 +3359,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1948477041}
   - component: {fileID: 1948477040}
+  - component: {fileID: 1948477043}
+  - component: {fileID: 1948477042}
   m_Layer: 0
   m_Name: Island
   m_TagString: Untagged
@@ -3442,11 +3381,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IslandSpawner
   _definition: {fileID: 11400000, guid: 67f2efbfb457d3441942f8a092007cbe, type: 2}
-  _slotMarkerPrefab: {fileID: 1234818536502709904, guid: b9824344701cfea4f8fedea29b8f6be2, type: 3}
   _blocksParent: {fileID: 1261826051}
   _treePrefab: {fileID: 3697809676261520579, guid: 74550403e4fb5ac4a80fd5eb8814d607, type: 3}
-  _tunasDefinition: {fileID: 11400000, guid: 4d367e1af215e6c40accf553c50059d9, type: 2}
-  _tumbangDefinition: {fileID: 11400000, guid: 4396584df1a44074eaf18bc612856f0f, type: 2}
   _teamworkSettings: {fileID: 11400000, guid: 262761ec0639e8a47a0b3954b51ad648, type: 2}
 --- !u!4 &1948477041
 Transform:
@@ -3465,6 +3401,50 @@ Transform:
   - {fileID: 1429630701}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1948477042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948477039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfea92f221e079a4dbbb517da0fccd6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IslandNavigation
+--- !u!114 &1948477043
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1948477039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 2
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 64
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 0}
+  m_BuildHeightMesh: 0
 --- !u!1 &2005209848
 GameObject:
   m_ObjectHideFlags: 0
@@ -3475,7 +3455,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2005209849}
   m_Layer: 0
-  m_Name: Spawn_N
+  m_Name: Island_Test
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3490,7 +3470,7 @@ Transform:
   m_GameObject: {fileID: 2005209848}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -5.6}
+  m_LocalPosition: {x: -9.43, y: 0, z: -5.56}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

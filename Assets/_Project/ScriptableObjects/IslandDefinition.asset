@@ -12,50 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81a0cc56a10ef9348b30a486decd853e, type: 3}
   m_Name: IslandDefinition
   m_EditorClassIdentifier: Assembly-CSharp::IslandDefinition
-  _blockSize: 8
   _blocks:
   - _id: Center
-    _cell: {x: 0, y: 0}
     _startState: 0
-    _treeSlotOffsets:
-    - {x: -2, y: -2}
-    - {x: 2, y: -2}
-    - {x: -2, y: 2}
-    - {x: 2, y: 2}
-    _viewPrefab: {fileID: 4250336686463696184, guid: 897e8942fe849b94186816eb7e9ceb1e, type: 3}
+    _viewPrefab: {fileID: 4250336686463696184, guid: 7987f2935c0a92048a7b7eb0e47356bd, type: 3}
   - _id: North
-    _cell: {x: 0, y: 1}
     _startState: 0
-    _treeSlotOffsets:
-    - {x: -2, y: -2}
-    - {x: 2, y: -2}
-    - {x: -2, y: 2}
-    - {x: 2, y: 2}
-    _viewPrefab: {fileID: 4250336686463696184, guid: 311a218d02c48c14fa2254fd59443414, type: 3}
+    _viewPrefab: {fileID: 4250336686463696184, guid: c41771fa9e890ae4e92a591c41aee9b1, type: 3}
   - _id: East
-    _cell: {x: 1, y: 0}
     _startState: 0
-    _treeSlotOffsets:
-    - {x: -2, y: -2}
-    - {x: 2, y: -2}
-    - {x: -2, y: 2}
-    - {x: 2, y: 2}
-    _viewPrefab: {fileID: 4250336686463696184, guid: aa729b45f43bbb945ab44c1434518bd5, type: 3}
+    _viewPrefab: {fileID: 4250336686463696184, guid: b98d6d4d38efbda42a3adeb144d69650, type: 3}
   - _id: South
-    _cell: {x: 0, y: -1}
     _startState: 0
-    _treeSlotOffsets:
-    - {x: -2, y: -2}
-    - {x: 2, y: -2}
-    - {x: -2, y: 2}
-    - {x: 2, y: 2}
-    _viewPrefab: {fileID: 4250336686463696184, guid: f0e96828b18079c42bb6344d6417683d, type: 3}
+    _viewPrefab: {fileID: 4250336686463696184, guid: 2d57770da535d074ab07d3040b5910ab, type: 3}
   - _id: West
-    _cell: {x: -1, y: 0}
     _startState: 0
-    _treeSlotOffsets:
-    - {x: -2, y: -2}
-    - {x: 2, y: -2}
-    - {x: -2, y: 2}
-    - {x: 2, y: 2}
-    _viewPrefab: {fileID: 4250336686463696184, guid: 7599350f1481d2149b1cd285c7b0448e, type: 3}
+    _viewPrefab: {fileID: 4250336686463696184, guid: 35d340c87c787904981dbb8b1daca815, type: 3}

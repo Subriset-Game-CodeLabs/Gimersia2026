@@ -16,7 +16,7 @@ public class TreeHealInteractable : MonoBehaviour, IInteractable
     private float _healedSinceLog;
     private PhaseType _loggedPhase;
 
-    public Vector3 InteractionPoint => transform.position;
+    public Vector3 InteractionPoint => _node.InteractionPoint;
     public bool CanInteract =>
         _node != null && _node.Data != null && _node.IsTargetable &&
         _node.Data.NeedsHealing && _workers != null;

@@ -19,7 +19,7 @@ public class TreeElementInteractable : MonoBehaviour, IInteractable
             return Mathf.Clamp01(_progress / settings.ReassignmentDuration);
         }
     }
-    public Vector3 InteractionPoint => transform.position;
+    public Vector3 InteractionPoint => _node.InteractionPoint;
     public bool CanInteract =>
         _node != null &&
         _node.IsTargetable &&
