@@ -1,14 +1,13 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // Main menu: Start Game, Settings pop-up, Credit pop-up, Exit.
 // Only one pop-up is open at a time; while it is open the main buttons cannot take focus.
+// Nothing is auto-selected on open: keyboard focus appears only after the first Arrow press.
 public class MainMenu : MonoBehaviour
 {
-    // TODO: go to Level Selection instead once that screen exists.
-    [SerializeField] private string _gameplayScene = SceneFlow.GameplayScene;
+    [SerializeField] private string _gameplayScene = SceneFlow.LevelSelectionScene;
 
     [Header("Main")]
     [SerializeField] private CanvasGroup _mainPanel;
@@ -29,9 +28,13 @@ public class MainMenu : MonoBehaviour
 
     private GameObject _openPopup;
     private Selectable _focusBeforePopup;
+    private UIFocusOnNavigate _focusNavigator;
 
     private void Awake()
     {
+        if (!TryGetComponent(out _focusNavigator))
+            _focusNavigator = gameObject.AddComponent<UIFocusOnNavigate>();
+
         _startButton.onClick.AddListener(StartGame);
         _settingsButton.onClick.AddListener(OpenSettings);
         _creditButton.onClick.AddListener(OpenCredit);
@@ -53,7 +56,7 @@ public class MainMenu : MonoBehaviour
     {
         // The main menu can be entered from a paused result screen.
         Time.timeScale = 1f;
-        Focus(_startButton);
+        _focusNavigator.SetDefaultTarget(_startButton, clearCurrentSelection: true);
     }
 
     private void OnDestroy()
@@ -84,19 +87,21 @@ public class MainMenu : MonoBehaviour
         _musicSlider.SetValueWithoutNotify(GameAudioSettings.MusicVolume);
         _sfxSlider.SetValueWithoutNotify(GameAudioSettings.SfxVolume);
         OpenPopup(_settingsPopup, _musicSlider, _settingsButton);
+        if (_musicSlider.TryGetComponent(out UIStateSlider musicVisual)) musicVisual.Refresh();
+        if (_sfxSlider.TryGetComponent(out UIStateSlider sfxVisual)) sfxVisual.Refresh();
     }
 
     private void OpenCredit() => OpenPopup(_creditPopup, _creditCloseButton, _creditButton);
 
-    private void OpenPopup(GameObject popup, Selectable focus, Selectable returnFocus)
+    private void OpenPopup(GameObject popup, Selectable firstControl, Selectable returnTarget)
     {
         if (_openPopup != null) ClosePopup();
         _openPopup = popup;
-        _focusBeforePopup = returnFocus;
+        _focusBeforePopup = returnTarget;
         popup.SetActive(true);
-        // Trap gamepad focus inside the pop-up.
+        // Trap keyboard/gamepad navigation inside the pop-up without auto-highlighting anything.
         _mainPanel.interactable = false;
-        Focus(focus);
+        _focusNavigator.SetDefaultTarget(firstControl, clearCurrentSelection: true);
     }
 
     private void ClosePopup()
@@ -106,15 +111,10 @@ public class MainMenu : MonoBehaviour
         _openPopup.SetActive(false);
         _openPopup = null;
         _mainPanel.interactable = true;
-        Focus(_focusBeforePopup != null ? _focusBeforePopup : _startButton);
+        _focusNavigator.SetDefaultTarget(_focusBeforePopup != null ? _focusBeforePopup : _startButton,
+            clearCurrentSelection: true);
     }
 
     private static void SetMusicVolume(float value) => GameAudioSettings.MusicVolume = value;
     private static void SetSfxVolume(float value) => GameAudioSettings.SfxVolume = value;
-
-    private static void Focus(Selectable target)
-    {
-        if (target == null || EventSystem.current == null) return;
-        EventSystem.current.SetSelectedGameObject(target.gameObject);
-    }
 }
