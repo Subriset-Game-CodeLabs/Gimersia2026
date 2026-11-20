@@ -183,8 +183,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockView
   _tileRenderer: {fileID: 0}
-  _corruptedColor: {r: 0.35, g: 0.2, b: 0.4, a: 1}
-  _cleanColor: {r: 0.35, g: 0.7, b: 0.3, a: 1}
   _highlightAmount: 0.35
   _tileCollider: {fileID: 4045147710931109510}
   _tileColliders:
@@ -770,6 +768,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7680622048205840110, guid: 60d65e4eed2ca444d9a5224665294248, type: 3}
+      propertyPath: _treeDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: 4396584df1a44074eaf18bc612856f0f, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

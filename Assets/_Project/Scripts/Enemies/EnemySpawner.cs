@@ -1,53 +1,100 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Shared")]
     [SerializeField] private EnemyController _enemyPrefab;
     [SerializeField] private Transform _enemiesParent;
-    [Header("Melee")]
-    [SerializeField] private EnemyDefinition _definition;
-    [SerializeField] private Transform[] _spawnPoints;
-    [Header("Ranged test route")]
-    [SerializeField] private EnemyDefinition _rangedDefinition;
-    [SerializeField] private Transform _rangedSpawnPoint;
-    [SerializeField] private Transform _rangedStopPoint;
+    [Header("Level configuration")]
+    [SerializeField] private List<EnemySpawnPointBinding> _spawnPointBindings = new List<EnemySpawnPointBinding>();
+    [Tooltip("Element 0 is night 1, element 1 is night 2, and so on.")]
+    [SerializeField] private List<EnemyWaveDefinition> _waves = new List<EnemyWaveDefinition>();
 
     private PhaseManager _phases;
     private readonly HashSet<EnemyController> _aliveEnemies = new HashSet<EnemyController>();
-    private bool _spawningWave;
-    private bool _waveActive;
+    private readonly EnemyWaveProgress _progress = new EnemyWaveProgress();
+    private readonly Dictionary<string, Transform> _pointsById = new Dictionary<string, Transform>(StringComparer.Ordinal);
+    private Coroutine _spawnRoutine;
+    private bool _started;
+
+    public int RemainingSpawns => _progress.RemainingSpawns;
+    public int AliveCount => _progress.AliveCount;
 
     private void Start()
     {
-        // Subscribe in Start: the phase manager begins day 1 on its first Update.
-        _phases = PhaseManager.Instance;
-        _phases.OnNightStart += HandleNightStart;
+        _started = true;
+        Subscribe();
     }
 
-    private void OnDestroy()
+    private void OnEnable()
     {
-        if (_phases != null) _phases.OnNightStart -= HandleNightStart;
+        if (_started) Subscribe();
+    }
+
+    private void Subscribe()
+    {
+        _phases = PhaseManager.Instance;
+        if (_phases == null)
+        {
+            Debug.LogError("EnemySpawner requires PhaseManager.", this);
+            return;
+        }
+        _phases.OnNightStart += HandleNightStart;
+        _phases.OnDayStart += HandleDayStart;
+        _phases.OnRunFinished += HandleRunFinished;
+        // Re-enabling during a night restarts its wave; it must not leave an empty, endless night.
+        if (_phases.CurrentPhase == PhaseType.Night && !_progress.IsActive)
+            HandleNightStart(_phases.CurrentDay);
+    }
+
+    private void OnDisable()
+    {
+        if (_phases != null)
+        {
+            _phases.OnNightStart -= HandleNightStart;
+            _phases.OnDayStart -= HandleDayStart;
+            _phases.OnRunFinished -= HandleRunFinished;
+        }
+        CancelWave();
+    }
+
+    private void HandleDayStart(int day) => CancelWave();
+    private void HandleRunFinished() => CancelWave();
+
+    private void CancelWave()
+    {
+        if (_spawnRoutine != null) StopCoroutine(_spawnRoutine);
+        _spawnRoutine = null;
+        _progress.Cancel();
         foreach (EnemyController enemy in _aliveEnemies)
-            if (enemy != null) enemy.OnDied -= HandleEnemyDied;
+        {
+            if (enemy == null) continue;
+            enemy.OnDied -= HandleEnemyDied;
+            enemy.gameObject.SetActive(false);
+            Destroy(enemy.gameObject);
+        }
         _aliveEnemies.Clear();
     }
 
     private void HandleNightStart(int night)
     {
-        // TODO(balance): one of each type per night is only a test wave.
-        _waveActive = true;
-        _spawningWave = true;
-        SpawnMelee();
-        SpawnRanged();
-        _spawningWave = false;
-        if (_aliveEnemies.Count == 0)
-            Debug.LogError("Night cannot finish: no enemies spawned. Check EnemySpawner setup.", this);
+        if (_progress.IsActive || _aliveEnemies.Count != 0)
+        {
+            Debug.LogError("Cannot start a second wave while the previous wave is active.", this);
+            return;
+        }
+        if (!TryResolveWave(night, out List<ScheduledGroup> schedule, out int count)) return;
+        _progress.Begin(count);
+        _spawnRoutine = StartCoroutine(SpawnWave(schedule));
     }
 
     private void RegisterEnemy(EnemyController enemy)
     {
+        _progress.RegisterSpawn();
         _aliveEnemies.Add(enemy);
         enemy.OnDied += HandleEnemyDied;
     }
@@ -55,47 +102,129 @@ public class EnemySpawner : MonoBehaviour
     private void HandleEnemyDied(EnemyController enemy)
     {
         enemy.OnDied -= HandleEnemyDied;
-        if (!_aliveEnemies.Remove(enemy) || !_waveActive || _spawningWave ||
-            _aliveEnemies.Count != 0)
-            return;
-
-        _waveActive = false;
-        _phases.CompleteNight();
+        if (!_aliveEnemies.Remove(enemy)) return;
+        _progress.RegisterDeath();
+        TryFinishWave();
     }
 
-    private void SpawnMelee()
+    private void TryFinishWave()
     {
-        if (_enemyPrefab == null || _definition == null ||
-            _spawnPoints == null || _spawnPoints.Length == 0)
-        {
-            Debug.LogError("EnemySpawner is missing melee setup.", this);
-            return;
-        }
-        Transform point = _spawnPoints[Random.Range(0, _spawnPoints.Length)];
-        if (point == null)
-        {
-            Debug.LogError("EnemySpawner has an empty melee spawn-point entry.", this);
-            return;
-        }
-        EnemyController enemy = Instantiate(
-            _enemyPrefab, point.position, Quaternion.identity, _enemiesParent);
-        enemy.Initialize(_definition);
-        RegisterEnemy(enemy);
+        if (_phases != null && _phases.CurrentPhase == PhaseType.Night && _progress.TryComplete())
+            _phases.CompleteNight();
     }
-    private void SpawnRanged()
+
+    private IEnumerator SpawnWave(List<ScheduledGroup> schedule)
     {
-        if (_enemyPrefab == null || _rangedDefinition == null ||
-            _rangedSpawnPoint == null || _rangedStopPoint == null)
+        // Defer work until OnNightStart has finished notifying every subscriber.
+        yield return null;
+        foreach (ScheduledGroup group in schedule)
         {
-            Debug.LogError("EnemySpawner is missing ranged setup.", this);
-            return;
+            if (group.InitialDelay > 0f) yield return new WaitForSeconds(group.InitialDelay);
+            for (int i = 0; i < group.Count; i++)
+            {
+                if (!_progress.IsActive || _phases.CurrentPhase != PhaseType.Night) yield break;
+                if (group.Point == null || !group.Point.gameObject.activeInHierarchy ||
+                    group.Prefab == null || group.Definition == null ||
+                    (_enemiesParent != null && !_enemiesParent.gameObject.activeInHierarchy))
+                {
+                    _progress.Fail();
+                    _spawnRoutine = null;
+                    Debug.LogError("Wave spawning stopped: a scheduled spawn reference was removed or disabled. Night will not auto-complete.", this);
+                    yield break;
+                }
+                EnemyController enemy = Instantiate(group.Prefab, group.Point.position, group.Point.rotation, _enemiesParent);
+                RegisterEnemy(enemy);
+                enemy.Initialize(group.Definition);
+                // This also separates adjacent one-enemy groups rather than spawning them together.
+                if (_progress.RemainingSpawns > 0)
+                    yield return new WaitForSeconds(group.SpawnInterval);
+            }
         }
-        EnemyController enemy = Instantiate(
-            _enemyPrefab,
-            _rangedSpawnPoint.position,
-            Quaternion.identity,
-            _enemiesParent);
-        enemy.Initialize(_rangedDefinition, _rangedStopPoint.position);
-        RegisterEnemy(enemy);
+        _progress.FinishSpawning();
+        _spawnRoutine = null;
+        TryFinishWave();
+    }
+
+    private bool TryResolveWave(int night, out List<ScheduledGroup> schedule, out int count)
+    {
+        schedule = new List<ScheduledGroup>();
+        count = 0;
+        _pointsById.Clear();
+        if (_spawnPointBindings == null || _spawnPointBindings.Count == 0)
+            return SetupError("Assign this level's Spawn Point Bindings.");
+        foreach (EnemySpawnPointBinding binding in _spawnPointBindings)
+        {
+            if (binding == null || string.IsNullOrWhiteSpace(binding.Id) || binding.Point == null ||
+                !binding.Point.gameObject.activeInHierarchy || _pointsById.ContainsKey(binding.Id))
+                return SetupError("Spawn Point Bindings need unique, non-empty IDs and active scene markers.");
+            _pointsById.Add(binding.Id, binding.Point);
+        }
+        if (_waves == null || night < 1 || night > _waves.Count || _waves[night - 1] == null)
+            return SetupError($"Assign an Enemy Wave for night {night}; missing waves do not auto-complete.");
+        EnemyWaveDefinition wave = _waves[night - 1];
+        if (wave.Groups == null || wave.Groups.Count == 0)
+            return SetupError($"Wave '{wave.name}' has no spawn groups.");
+        if (_enemiesParent != null && !_enemiesParent.gameObject.activeInHierarchy)
+            return SetupError("Enemies Parent must be active.");
+
+        foreach (EnemySpawnGroup group in wave.Groups)
+        {
+            if (group == null || group.Count <= 0 || !IsFinite(group.SpawnInterval) || group.SpawnInterval <= 0f ||
+                !IsFinite(group.InitialDelay) || group.InitialDelay < 0f || string.IsNullOrWhiteSpace(group.SpawnPointId) ||
+                !_pointsById.TryGetValue(group.SpawnPointId, out Transform point))
+                return SetupError($"Wave '{wave.name}' needs positive counts/intervals, non-negative delays, and matching Spawn Point IDs.");
+            EnemyController prefab = group.EnemyPrefab != null ? group.EnemyPrefab : _enemyPrefab;
+            EnemyDefinition definition = group.EnemyDefinition;
+            if (prefab == null || !prefab.gameObject.activeSelf || !prefab.enabled || prefab.GetComponent<NavMeshAgent>() == null)
+                return SetupError($"Wave '{wave.name}' needs an active enemy prefab with EnemyController and NavMeshAgent.");
+            if (!ValidateDefinition(definition)) return false;
+            if (group.Count > int.MaxValue - count) return SetupError("Wave enemy count is too large.");
+            count += group.Count;
+            schedule.Add(new ScheduledGroup(group, prefab, point));
+        }
+        return true;
+    }
+
+    private bool ValidateDefinition(EnemyDefinition definition)
+    {
+        if (definition == null || !IsPositive(definition.MaxHp) || !IsPositive(definition.MoveSpeed) ||
+            !IsPositive(definition.AttackInterval) || !IsPositive(definition.AttackRange) ||
+            !IsFinite(definition.Damage) || definition.Damage < 0f ||
+            (definition.ApproachType != EnemyApproachType.Melee && definition.ApproachType != EnemyApproachType.Ranged))
+            return SetupError("Enemy definitions need finite, positive HP, speed, interval and range, plus non-negative damage.");
+        if (definition.ApproachType == EnemyApproachType.Ranged &&
+            (definition.ProjectilePrefab == null || !definition.ProjectilePrefab.gameObject.activeSelf ||
+             !definition.ProjectilePrefab.enabled || !IsPositive(definition.ProjectileSpeed) || !IsPositive(definition.ProjectileLifetime)))
+            return SetupError($"Ranged definition '{definition.name}' needs an active EnemyProjectile prefab, positive speed and lifetime.");
+        return true;
+    }
+
+    private bool SetupError(string message)
+    {
+        Debug.LogError(message, this);
+        return false;
+    }
+
+    private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+    private static bool IsPositive(float value) => IsFinite(value) && value > 0f;
+
+    private sealed class ScheduledGroup
+    {
+        public readonly EnemyDefinition Definition;
+        public readonly EnemyController Prefab;
+        public readonly Transform Point;
+        public readonly int Count;
+        public readonly float SpawnInterval;
+        public readonly float InitialDelay;
+
+        public ScheduledGroup(EnemySpawnGroup group, EnemyController prefab, Transform point)
+        {
+            Definition = group.EnemyDefinition;
+            Prefab = prefab;
+            Point = point;
+            Count = group.Count;
+            SpawnInterval = group.SpawnInterval;
+            InitialDelay = group.InitialDelay;
+        }
     }
 }

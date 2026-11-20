@@ -241,8 +241,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockView
   _tileRenderer: {fileID: 0}
-  _corruptedColor: {r: 0.35, g: 0.2, b: 0.4, a: 1}
-  _cleanColor: {r: 0.35, g: 0.7, b: 0.3, a: 1}
   _highlightAmount: 0.35
   _tileCollider: {fileID: 4045147710931109510}
   _tileColliders:
@@ -400,7 +398,7 @@ Transform:
   m_GameObject: {fileID: 5401142405646699034}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -24.56, y: 0, z: -16.13}
+  m_LocalPosition: {x: -24.34, y: 0, z: -16.13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3300,7 +3298,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 956707742182063105, guid: b369a76103f48b5488746d2cbda80677, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -24.71579
+      value: -25.68
       objectReference: {fileID: 0}
     - target: {fileID: 956707742182063105, guid: b369a76103f48b5488746d2cbda80677, type: 3}
       propertyPath: m_LocalPosition.y
@@ -3308,7 +3306,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 956707742182063105, guid: b369a76103f48b5488746d2cbda80677, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.778
+      value: 3.92
       objectReference: {fileID: 0}
     - target: {fileID: 956707742182063105, guid: b369a76103f48b5488746d2cbda80677, type: 3}
       propertyPath: m_LocalRotation.w

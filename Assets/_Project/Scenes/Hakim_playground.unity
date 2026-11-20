@@ -150,37 +150,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1669123062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &13487380
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 13487381}
-  m_Layer: 0
-  m_Name: Spawn_S
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &13487381
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 13487380}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 4.37}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1727569854}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &36932448
 GameObject:
   m_ObjectHideFlags: 0
@@ -1245,15 +1214,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
   _enemyPrefab: {fileID: 288938686289014693, guid: 55cc2ef2aefc19f4f82ff44844ca5c24, type: 3}
   _enemiesParent: {fileID: 1697611840}
-  _definition: {fileID: 11400000, guid: db08815d33e93d74fb0b56d0c5f8046a, type: 2}
-  _spawnPoints:
-  - {fileID: 2005209849}
-  - {fileID: 1436707463}
-  - {fileID: 13487381}
-  - {fileID: 796749540}
-  _rangedDefinition: {fileID: 11400000, guid: d17b8f2198399884091ceefc3721e6b8, type: 2}
-  _rangedSpawnPoint: {fileID: 1729403104}
-  _rangedStopPoint: {fileID: 3935944}
+  _spawnPointBindings:
+  - _id: Island_Test
+    _point: {fileID: 2005209849}
+  - _id: Offshore_Test
+    _point: {fileID: 1436707463}
+  _waves:
+  - {fileID: 11400000, guid: c03f9f1cecbf9e2478aedbf16c8d1923, type: 2}
 --- !u!4 &538230579
 Transform:
   m_ObjectHideFlags: 0
@@ -1660,37 +1627,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &796749539
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 796749540}
-  m_Layer: 0
-  m_Name: Spawn_W
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &796749540
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 796749539}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.06, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1727569854}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &838127538
 GameObject:
@@ -2711,7 +2647,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1436707463}
   m_Layer: 0
-  m_Name: Spawn_E
+  m_Name: Offshore_Test
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2726,7 +2662,7 @@ Transform:
   m_GameObject: {fileID: 1436707462}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5, y: 0, z: 0}
+  m_LocalPosition: {x: -19.9, y: 0, z: 25.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3288,8 +3224,6 @@ Transform:
   m_Children:
   - {fileID: 2005209849}
   - {fileID: 1436707463}
-  - {fileID: 13487381}
-  - {fileID: 796749540}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1729403103
@@ -3521,7 +3455,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2005209849}
   m_Layer: 0
-  m_Name: Spawn_N
+  m_Name: Island_Test
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3536,7 +3470,7 @@ Transform:
   m_GameObject: {fileID: 2005209848}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -5.6}
+  m_LocalPosition: {x: -9.43, y: 0, z: -5.56}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
