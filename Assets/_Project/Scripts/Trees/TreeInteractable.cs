@@ -1,61 +1,144 @@
 using UnityEngine;
 
-
 [RequireComponent(typeof(TreeNode))]
 public class TreeInteractable : MonoBehaviour, IInteractable
 {
+    [Tooltip("Jika aktif, Spirit berhenti setelah menaikkan 1 fase (Initial -> Intermediate) dan perlu diklik lagi untuk fase berikutnya.")]
+    [SerializeField] private bool _stopAfterEachStage = true;
+
     private TreeNode _node;
     private WorkerSet _workers;
-    private float _progress; // work done in the current stage, in seconds
+    private float _progress;
+    private bool _awaitingNewCommand;
 
-    // 0..1 for the current stage. A progress bar can read this later.
     public float Progress01
     {
         get
         {
-            float duration = _node.Data.Definition.GetPhaseDuration(_node.Data.Stage);
+            if (_node == null || _node.Data == null) return 0f;
+            float duration = GetCurrentDuration();
             return duration > 0f ? Mathf.Clamp01(_progress / duration) : 1f;
         }
     }
+
+    public bool IsWorking => _workers != null && _workers.Count > 0 && CanInteract;
 
     private void Awake()
     {
         _node = GetComponent<TreeNode>();
     }
 
-    // Called by IslandSpawner right after the node is created.
     public void Initialize(TeamworkSettings teamwork)
     {
         _node = GetComponent<TreeNode>();
         _workers = new WorkerSet(teamwork);
+
+        if (_node != null && _node.Data != null)
+        {
+            _node.Data.OnStageDowngraded += HandleStageDowngraded;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_node != null && _node.Data != null)
+        {
+            _node.Data.OnStageDowngraded -= HandleStageDowngraded;
+        }
     }
 
     public Vector3 InteractionPoint => _node.InteractionPoint;
 
-    // Hidden nodes are inactive, so they cannot be clicked. This covers the rest.
-    public bool CanInteract => _node != null && _node.Data != null && _node.IsTargetable &&
-        _workers != null && !_node.Data.IsFullyGrown;
+    public bool CanInteract =>
+        _node != null &&
+        _node.Data != null &&
+        _node.IsTargetable &&
+        _workers != null &&
+        !_node.Data.IsFullyGrown &&
+        !_awaitingNewCommand;
 
-    public void AddWorker(SpiritController spirit) => _workers.Add(spirit);
-    public void RemoveWorker(SpiritController spirit) => _workers.Remove(spirit);
+    /// <summary>
+    /// Dipanggil saat pemain mengklik pohon untuk memulai sesi pertumbuhan fase berikutnya.
+    /// </summary>
+    public void PrepareForNewCommand()
+    {
+        _awaitingNewCommand = false;
+    }
+
+    public void AddWorker(SpiritController spirit)
+    {
+        if (_workers == null) return;
+        _workers.Add(spirit);
+        UpdateProgressVfx();
+    }
+
+    public void RemoveWorker(SpiritController spirit)
+    {
+        if (_workers == null) return;
+        _workers.Remove(spirit);
+
+        // Jika seluruh Spirit meninggalkan pohon sebelum fase selesai, reset progres ke 0%
+        if (_workers.Count == 0)
+        {
+            _awaitingNewCommand = false;
+            _progress = 0f;
+        }
+
+        UpdateProgressVfx();
+    }
 
     public void Interact(SpiritController spirit, float deltaTime)
     {
-        if (!CanInteract) return;
+        if (!CanInteract)
+        {
+            if (_node != null) _node.SetGrowthVfxActive(false);
+            return;
+        }
+
+        UpdateProgressVfx();
         _progress += _workers.GetShare(deltaTime);
+
         if (_progress < GetCurrentDuration()) return;
+
         _progress = 0f;
         _node.Data.SetStage(_node.Data.Stage + 1);
+
+        // Hentikan sesi saat ini agar Spirit kembali Idle dan menunggu klik untuk fase selanjutnya
+        if (_stopAfterEachStage && !_node.Data.IsFullyGrown)
+        {
+            _awaitingNewCommand = true;
+        }
+
+        UpdateProgressVfx();
+    }
+
+    private void HandleStageDowngraded()
+    {
+        _progress = 0f;
+        _awaitingNewCommand = false;
+        UpdateProgressVfx();
+    }
+
+    private void UpdateProgressVfx()
+    {
+        if (_node != null)
+            _node.SetGrowthVfxActive(IsWorking);
     }
 
     private float GetCurrentDuration()
     {
-        float baseDuration =
-            _node.Data.Definition.GetPhaseDuration(_node.Data.Stage);
+        float baseDuration = _node.Data.Definition.GetPhaseDuration(_node.Data.Stage);
         TreeRegistry registry = TreeRegistry.Instance;
         float multiplier = registry != null
             ? registry.GetGrowthTimeMultiplier(_node.Data.Element)
             : 1f;
         return baseDuration * multiplier;
+    }
+
+    private void OnDisable()
+    {
+        _progress = 0f;
+        _awaitingNewCommand = false;
+        if (_node != null) _node.SetGrowthVfxActive(false);
     }
 }

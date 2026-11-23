@@ -22,6 +22,9 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.15, 0.15, 0.2, 1)
         _OutlineWidth ("Outline Width", Range(0.0, 0.1)) = 0.004
+
+        [Header(Spirit Occluder Cutout)]
+        [Toggle] _EnableOccluderCutout ("Enable Spirit See-Through Cutout", Float) = 0
        
         [Header(Stencil)]
         _Stencil ("Stencil ID [0;255]", Float) = 0
@@ -80,7 +83,85 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             float _RimPower;
             half4 _OutlineColor;
             float _OutlineWidth;
+            float _EnableOccluderCutout;
         CBUFFER_END
+
+        // Variabel global yang dikirim oleh SpiritOcclusionController.cs
+        float4 _SpiritCutoutBottoms[3];
+        float4 _SpiritCutoutTops[3];
+        float _SpiritCutoutRadii[3];
+
+        float DistanceToSegment(float3 p, float3 a, float3 b)
+        {
+            float3 ab = b - a;
+            float lenSq = max(dot(ab, ab), 0.0001);
+            float t = saturate(dot(p - a, ab) / lenSq);
+            float3 closest = a + ab * t;
+            return length(p - closest);
+        }
+
+        float DistanceToViewCapsule(float3 pixelWS, float3 camWS, float3 spiritBottom, float3 spiritTop)
+        {
+            float3 spiritCenter = (spiritBottom + spiritTop) * 0.5;
+            float3 camToSpirit = spiritCenter - camWS;
+            float spiritDist = length(camToSpirit);
+            float3 viewDir = camToSpirit / max(spiritDist, 0.0001);
+
+            float pixelDepth = dot(pixelWS - camWS, viewDir);
+            if (pixelDepth > spiritDist + 0.5 || pixelDepth < 0.0)
+                return 9999.0;
+
+            float scaleRatio = saturate(pixelDepth / max(spiritDist, 0.0001));
+            float3 projectedBottom = lerp(camWS, spiritBottom, scaleRatio);
+            float3 projectedTop = lerp(camWS, spiritTop, scaleRatio);
+            return DistanceToSegment(pixelWS, projectedBottom, projectedTop);
+        }
+
+        float BayerDither4x4(float2 screenPixel)
+        {
+            int x = int(fmod(screenPixel.x, 4.0));
+            int y = int(fmod(screenPixel.y, 4.0));
+            int index = y * 4 + x;
+            const float bayer[16] = {
+                 0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
+                12.0/16.0,  4.0/16.0, 14.0/16.0,  6.0/16.0,
+                 3.0/16.0, 11.0/16.0,  1.0/16.0,  9.0/16.0,
+                15.0/16.0,  7.0/16.0, 13.0/16.0,  5.0/16.0
+            };
+            return bayer[index];
+        }
+
+        void ApplySpiritOccluderCutout(float3 positionWS, float2 screenPixel)
+        {
+            if (_EnableOccluderCutout < 0.5)
+                return;
+
+            float3 camWS = GetCameraPositionWS();
+            float minMask = 1.0;
+
+            [unroll]
+            for (int i = 0; i < 3; i++)
+            {
+                float radius = _SpiritCutoutRadii[i];
+                if (radius > 0.001)
+                {
+                    float dist = DistanceToViewCapsule(
+                        positionWS,
+                        camWS,
+                        _SpiritCutoutBottoms[i].xyz,
+                        _SpiritCutoutTops[i].xyz
+                    );
+                    float mask = smoothstep(radius * 0.65, radius, dist);
+                    minMask = min(minMask, mask);
+                }
+            }
+
+            if (minMask < 0.99)
+            {
+                float threshold = BayerDither4x4(screenPixel);
+                clip(minMask - threshold);
+            }
+        }
 
         struct Attributes
         {
@@ -99,7 +180,7 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
         };
         ENDHLSL
        
-        // Pass 1: Main Toon + Fake AO + Rim Light (URP Forward)
+        // Pass 1: Main Toon + Fake AO + Rim Light + Spirit Cutout (URP Forward)
         Pass
         {
             Name "UniversalForward"
@@ -128,6 +209,8 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
 
             half4 frag(Varyings input) : SV_Target
             {
+                ApplySpiritOccluderCutout(input.positionWS, input.positionCS.xy);
+
                 // 1. Base Texture & Albedo
                 half4 texCol = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * _Color;
 
@@ -160,7 +243,7 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             ENDHLSL
         }
 
-        // Pass 2: Inverted Hull Outline (Menggunakan SRPDefaultUnlit agar otomatis dirender URP)
+        // Pass 2: Inverted Hull Outline + Spirit Cutout
         Pass
         {
             Name "OutlinePass"
@@ -182,13 +265,14 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
                 output.positionCS = TransformObjectToHClip(extrudedPos);
                 output.uv = input.uv;
                 output.normalWS = float3(0, 0, 0);
-                output.positionWS = float3(0, 0, 0);
+                output.positionWS = TransformObjectToWorld(extrudedPos);
                 output.localY = 0;
                 return output;
             }
 
             half4 fragOutline(Varyings input) : SV_Target
             {
+                ApplySpiritOccluderCutout(input.positionWS, input.positionCS.xy);
                 return _OutlineColor;
             }
             ENDHLSL
@@ -196,5 +280,11 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
        
         // Pass 3: Shadow Caster bawaan URP
         UsePass "Universal Render Pipeline/Lit/ShadowCaster"
+
+        // Pass 4: Depth Only agar objek tercatat di _CameraDepthTexture (memicu busa air)
+        UsePass "Universal Render Pipeline/Lit/DepthOnly"
+
+        // Pass 5: Depth Normals agar arah permukaan objek tercatat di _CameraNormalsTexture
+        UsePass "Universal Render Pipeline/Lit/DepthNormals"
     }
 }

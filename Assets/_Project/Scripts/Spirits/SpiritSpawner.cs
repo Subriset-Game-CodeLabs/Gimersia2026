@@ -3,10 +3,9 @@ using UnityEngine;
 
 public class SpiritSpawner : MonoBehaviour
 {
-   // One prefab per spirit, so each can have its own model later.
+    [Tooltip("Isi dengan 3 prefab Spirit yang berbeda (misal: Api, Air, Petir).")]
     [SerializeField] private SpiritView[] _spiritPrefabs = new SpiritView[3];
 
-    // TODO(balance): placeholder start positions, relative to this object. The final spots depend on the island layout.
     [SerializeField] private Vector3[] _spawnOffsets =
     {
         new Vector3(-2f, 0f, 0f),
@@ -18,34 +17,28 @@ public class SpiritSpawner : MonoBehaviour
 
     public IReadOnlyList<SpiritView> Spirits => _spirits;
 
-    private void Start()
+    private void Awake()
     {
+        SpawnSpirits();
+    }
+
+    private void SpawnSpirits()
+    {
+        if (_spirits.Count > 0) return;
+
         for (int i = 0; i < _spiritPrefabs.Length; i++)
         {
             if (_spiritPrefabs[i] == null)
             {
-                Debug.LogError($"SpiritSpawner: prefab {i} is not assigned.", this);
+                Debug.LogError($"SpiritSpawner: prefab pada index {i} belum di-assign.", this);
                 continue;
             }
 
             Vector3 offset = _spawnOffsets[i % _spawnOffsets.Length];
             SpiritView view = Instantiate(_spiritPrefabs[i], transform.position + offset, Quaternion.identity, transform);
-            view.name = $"Spirit {i + 1}";
+            view.name = $"Spirit {i + 1} ({view.Element})";
             view.Initialize(i);
             _spirits.Add(view);
         }
-    }
-
-    // --- TEMPORARY TEST: remove before finishing the task ---
-    [ContextMenu("Test: Rings On")]
-    private void TestRingsOn()
-    {
-        foreach (SpiritView s in _spirits) s.SetSelected(true);
-    }
-
-    [ContextMenu("Test: Rings Off")]
-    private void TestRingsOff()
-    {
-        foreach (SpiritView s in _spirits) s.SetSelected(false);
     }
 }

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: TreeDefinition_Tunas
   m_EditorClassIdentifier: Assembly-CSharp::TreeDefinition
   _type: 0
+  _prefab: {fileID: 3697809676261520579, guid: 0dbefac6a036c9a449f64563500a496d, type: 3}
   _maxHp: 100
   _phase1Duration: 4
   _phase2Duration: 4

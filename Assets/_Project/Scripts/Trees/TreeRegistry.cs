@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 [DefaultExecutionOrder(-100)]
 public class TreeRegistry : MonoBehaviour
 {
@@ -11,11 +10,11 @@ public class TreeRegistry : MonoBehaviour
 
     private readonly List<TreeNode> _trees = new List<TreeNode>();
     public ElementSettings Settings => _elementSettings;
-    // A tree died. Used by the lose check and later by effects.
+
     public event Action<TreeNode> OnTreeDied;
-    // The number of targetable trees changed (revealed, hidden, or died).
     public event Action OnCountChanged;
     public event Action OnPowerChanged;
+
     private void Awake()
     {
         Instance = this;
@@ -36,7 +35,6 @@ public class TreeRegistry : MonoBehaviour
         tree.Data.OnDied += () => OnTreeDied?.Invoke(tree);
     }
 
-    // Trees that are revealed and alive. Small list, so a loop is cheap.
     public int AliveCount
     {
         get
@@ -46,6 +44,32 @@ public class TreeRegistry : MonoBehaviour
                 if (_trees[i].IsTargetable) count++;
             return count;
         }
+    }
+
+    /// <summary>
+    /// Menghitung jumlah pohon yang sudah mencapai minimal fase Intermediate.
+    /// Bertambah saat naik dari Initial -> Intermediate, dan berkurang saat turun kembali ke Initial.
+    /// </summary>
+    public int GetGrownTreeCount(bool includeComplete = true)
+    {
+        int count = 0;
+        for (int i = 0; i < _trees.Count; i++)
+        {
+            TreeNode tree = _trees[i];
+            if (!tree.IsTargetable || tree.Data == null) continue;
+
+            if (includeComplete)
+            {
+                if (tree.Data.Stage >= TreeStage.Intermediate)
+                    count++;
+            }
+            else
+            {
+                if (tree.Data.Stage == TreeStage.Intermediate)
+                    count++;
+            }
+        }
+        return count;
     }
 
     public int GetTotalPower(ElementType element)
@@ -59,7 +83,10 @@ public class TreeRegistry : MonoBehaviour
                 tree.Data.IsFullyGrown &&
                 tree.Data.Element == element)
             {
-                power += tree.Data.Definition.ElementPower;
+                int bonus = tree.Data.Definition.ElementPower > 0
+                    ? tree.Data.Definition.ElementPower
+                    : (tree.Data.Definition.Type == TreeType.Tumbang ? 15 : 10);
+                power += bonus;
             }
         }
         return power;
@@ -70,13 +97,13 @@ public class TreeRegistry : MonoBehaviour
         if (_elementSettings == null || element == ElementType.None) return 1f;
         return _elementSettings.GetAttackSpeedMultiplier(GetTotalPower(element));
     }
+
     public float GetGrowthTimeMultiplier(ElementType element)
     {
         if (_elementSettings == null || element == ElementType.None) return 1f;
         return _elementSettings.GetGrowthTimeMultiplier(GetTotalPower(element));
     }
 
-    // Nearest targetable tree on the ground plane. No allocations.
     public bool TryGetNearest(Vector3 from, out TreeNode nearest)
     {
         nearest = null;
@@ -84,7 +111,7 @@ public class TreeRegistry : MonoBehaviour
         for (int i = 0; i < _trees.Count; i++)
         {
             TreeNode tree = _trees[i];
-            if (!tree.IsTargetable) continue;
+            if (!tree.IsEnemyTargetable) continue;
 
             Vector3 d = tree.TargetPoint - from;
             d.y = 0f;
@@ -103,9 +130,9 @@ public class TreeRegistry : MonoBehaviour
         OnCountChanged?.Invoke();
         OnPowerChanged?.Invoke();
     }
+
     private void HandlePowerChanged()
     {
         OnPowerChanged?.Invoke();
     }
-
 }

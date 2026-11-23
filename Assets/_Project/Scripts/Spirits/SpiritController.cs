@@ -4,18 +4,27 @@ using UnityEngine.AI;
 
 public enum SpiritState { Idle, Moving, Interacting, Fighting }
 
-
 public class SpiritController : MonoBehaviour
 {
-    // TODO(balance): placeholder move speed.
+    [Header("Movement")]
     [SerializeField] private float _moveSpeed = 4f;
     [SerializeField] private float _arriveDistance = 0.05f;
     [SerializeField, Range(0.05f, 2f)] private float _destinationSampleRadius = 1f;
     [SerializeField, Min(0.05f)] private float _pursuitRepathInterval = 0.25f;
+    [SerializeField] private float _turnSpeed = 12f;
+
+    [Header("Combat & Projectile")]
     [SerializeField] private SpiritCombatSettings _combatSettings;
+    [Tooltip("Multiplier damage tambahan ketika Special Attack terpilih.")]
+    [SerializeField, Min(1f)] private float _specialAttackDamageMultiplier = 1.6f;
+    [Tooltip("Skala ukuran prefab projectile 3D sphere saat Special Attack.")]
+    [SerializeField, Min(1f)] private float _specialProjectileScale = 1.65f;
 
     private NavMeshAgent _agent;
     private NavMeshPath _path;
+    private SpiritView _view;
+    private SpiritAnimator _animator;
+
     private readonly Vector3[] _pathCorners = new Vector3[128];
     private bool _hasMovePath;
     private bool _reportedInvalidSetup;
@@ -28,27 +37,33 @@ public class SpiritController : MonoBehaviour
     private float _attackCooldown;
     private bool _registeredAsAttacker;
 
-    public SpiritState State { get; private set; } = SpiritState.Idle;
+    private bool _hasPendingShot;
+    private float _pendingDamage;
+    private float _pendingProjectileScale;
+    private EnemyController _pendingEnemy;
 
-    // Shared destinations need room for all workers; combat still closes to attack range.
+    public SpiritState State { get; private set; } = SpiritState.Idle;
+    public bool IsChasingEnemy { get; private set; }
+    public ElementType Element => _view != null ? _view.Element : ElementType.None;
+    public int CommandId { get; private set; }
+
     private float ArrivalDistance => State == SpiritState.Fighting
         ? Mathf.Max(0.01f, _arriveDistance)
         : Mathf.Max(Mathf.Max(0.01f, _arriveDistance), _agent.radius * 2f + 0.05f);
 
     public event Action OnArrived;
-    // For the animation task: one place to react to idle, moving and working.
     public event Action<SpiritState> OnStateChanged;
 
     private void Awake()
     {
         _agent = GetComponent<NavMeshAgent>();
+        _view = GetComponent<SpiritView>();
+        _animator = GetComponent<SpiritAnimator>();
         _path = new NavMeshPath();
+
         if (_agent != null)
-        {
-            // Every route is validated here, including its island bounds in combat.
             _agent.autoRepath = false;
-        }
-        // Idle spirits do no per-frame work.
+
         enabled = false;
     }
 
@@ -64,6 +79,8 @@ public class SpiritController : MonoBehaviour
 
     public void MoveTo(Vector3 worldPoint)
     {
+        CommandId++;
+        if (_animator != null) _animator.NotifyPlayerInteraction();
         Stop();
         BeginMove(worldPoint);
     }
@@ -72,6 +89,8 @@ public class SpiritController : MonoBehaviour
     {
         if (!IsLiveTarget(target) || !target.CanInteract) return;
 
+        CommandId++;
+        if (_animator != null) _animator.NotifyPlayerInteraction();
         Stop();
         SetTarget(target);
         BeginMove(target.InteractionPoint);
@@ -81,17 +100,22 @@ public class SpiritController : MonoBehaviour
     {
         if (enemy == null || !enemy.IsAlive || _combatSettings == null) return;
 
+        CommandId++;
+        if (_animator != null) _animator.NotifyPlayerInteraction();
         Stop();
         if (!NavigationReady()) return;
+
         _enemy = enemy;
         _islandBounds = islandBounds;
         _attackCooldown = 0f;
         _nextPursuitRepath = 0f;
+
         if (!InsideIsland(transform.position))
         {
             Stop();
             return;
         }
+
         SetState(SpiritState.Fighting);
         enabled = true;
     }
@@ -100,11 +124,18 @@ public class SpiritController : MonoBehaviour
     {
         UnregisterAttacker();
         _enemy = null;
+        IsChasingEnemy = false;
+        ClearPendingShot();
     }
 
-    // The only place the target changes. It unregisters from the old target first,
-    // so every exit path (new order, finish, destroy) stays correct.
-    // Remove is a no-op if the spirit was never registered (still walking).
+    private void ClearPendingShot()
+    {
+        _hasPendingShot = false;
+        _pendingEnemy = null;
+        _pendingDamage = 0f;
+        _pendingProjectileScale = 1f;
+    }
+
     private void SetTarget(IInteractable target)
     {
         if (_registeredAsWorker && IsLiveTarget(_interactable)) _interactable.RemoveWorker(this);
@@ -177,7 +208,6 @@ public class SpiritController : MonoBehaviour
         {
             if (!InsideIsland(transform.position) || !InsideIsland(hit.position)) return false;
             int count = _path.GetCornersNonAlloc(_pathCorners);
-            // Reject truncated paths rather than trust unchecked sections.
             if (count == _pathCorners.Length) return false;
             for (int i = 0; i < count; i++)
                 if (!InsideIsland(_pathCorners[i])) return false;
@@ -196,7 +226,6 @@ public class SpiritController : MonoBehaviour
     private bool HasArrived()
     {
         float tolerance = ArrivalDistance;
-        // Agent base offset / visual height must not prevent ground-plane arrival.
         Vector3 toTarget = transform.position - _target;
         toTarget.y = 0f;
         return toTarget.sqrMagnitude <= tolerance * tolerance
@@ -220,6 +249,11 @@ public class SpiritController : MonoBehaviour
 
     private void Update()
     {
+        if (_hasPendingShot && (_animator == null || !_animator.IsAttackInProgress))
+        {
+            TriggerAnimationProjectileRelease();
+        }
+
         switch (State)
         {
             case SpiritState.Moving:
@@ -253,12 +287,10 @@ public class SpiritController : MonoBehaviour
         StopNavigation();
         IInteractable arrivedTarget = _interactable;
         OnArrived?.Invoke();
-        // An arrival listener may issue another command.
         if (State != SpiritState.Moving || _hasMovePath || _interactable != arrivedTarget) return;
 
         if (IsLiveTarget(_interactable) && _interactable.CanInteract)
         {
-            // Register only on arrival, so walking spirits don't count for the multiplier.
             _interactable.AddWorker(this);
             _registeredAsWorker = true;
             SetState(SpiritState.Interacting);
@@ -271,12 +303,16 @@ public class SpiritController : MonoBehaviour
 
     private void UpdateInteracting()
     {
-        // The target may finish while we work (or because another spirit finished it).
         if (!NavigationReady() || !IsLiveTarget(_interactable) || !_interactable.CanInteract)
         {
             Stop();
             return;
         }
+
+        Vector3 lookTarget = (_interactable is Component comp)
+            ? comp.transform.position
+            : _interactable.InteractionPoint;
+        FaceDirection(lookTarget - transform.position);
 
         _interactable.Interact(this, Time.deltaTime);
     }
@@ -294,9 +330,12 @@ public class SpiritController : MonoBehaviour
         toEnemy.y = 0f;
         float distance = toEnemy.magnitude;
         float range = _combatSettings.AttackRange;
+
         if (distance > range)
         {
+            IsChasingEnemy = true;
             UnregisterAttacker();
+
             if (_hasMovePath && !_agent.pathPending && !PathIsValid())
             {
                 Stop();
@@ -304,7 +343,6 @@ public class SpiritController : MonoBehaviour
             }
             if (!_hasMovePath || Time.time >= _nextPursuitRepath)
             {
-                // The NavMesh defines the walkable island; bounds also exclude external meshes.
                 Vector3 destination = _enemy.transform.position;
                 destination.x = Mathf.Clamp(destination.x, _islandBounds.min.x, _islandBounds.max.x);
                 destination.z = Mathf.Clamp(destination.z, _islandBounds.min.z, _islandBounds.max.z);
@@ -323,37 +361,48 @@ public class SpiritController : MonoBehaviour
                 }
                 _nextPursuitRepath = Time.time + Mathf.Max(0.05f, _pursuitRepathInterval);
             }
-            // A reachable shore point may still be too far from a ranged enemy.
             if (!_agent.pathPending && HasArrived()) Stop();
             return;
         }
 
+        IsChasingEnemy = false;
         StopNavigation();
+
         if (!_registeredAsAttacker)
         {
             _enemy.AddAttacker(this);
             _registeredAsAttacker = true;
         }
+
         if (distance > 0.001f)
-            transform.rotation = Quaternion.LookRotation(toEnemy / distance);
+            FaceDirection(toEnemy);
+
+        if (_animator != null && _animator.IsAttackInProgress) return;
+
         _attackCooldown -= Time.deltaTime;
         if (_attackCooldown > 0f) return;
 
+        BeginAttackSwing();
+    }
+
+    private void BeginAttackSwing()
+    {
         TreeRegistry registry = TreeRegistry.Instance;
         ElementSettings elements = registry != null ? registry.Settings : null;
-        ElementType counter = elements != null
-            ? elements.GetCounterTo(_enemy.Definition.Element)
-            : ElementType.None;
+        ElementType spiritElement = Element;
+
         float damage = _combatSettings.Damage;
         float attackSpeed = 1f;
+
         if (elements != null)
         {
-            damage *= elements.GetDamageMultiplier(counter, _enemy.Definition.Element);
-            if (counter != ElementType.None)
+            damage *= elements.GetDamageMultiplier(spiritElement, _enemy.Definition.Element);
+
+            if (spiritElement != ElementType.None)
             {
-                int power = registry.GetTotalPower(counter);
+                int power = registry.GetTotalPower(spiritElement);
                 damage *= elements.GetDamageBonusMultiplier(power);
-                attackSpeed = registry.GetAttackSpeedMultiplier(counter);
+                attackSpeed = registry.GetAttackSpeedMultiplier(spiritElement);
             }
         }
 
@@ -363,8 +412,63 @@ public class SpiritController : MonoBehaviour
             int count = Mathf.Max(1, _enemy.AttackerCount);
             damage *= teamwork.GetMultiplier(count) / count;
         }
-        _enemy.TakeDamage(damage);
+
+        bool isSpecialAttack = false;
+        if (_animator != null)
+        {
+            isSpecialAttack = _animator.PlayAttack(attackSpeed);
+        }
+
+        if (isSpecialAttack)
+        {
+            damage *= _specialAttackDamageMultiplier;
+        }
+
+        _pendingEnemy = _enemy;
+        _pendingDamage = damage;
+        _pendingProjectileScale = isSpecialAttack ? _specialProjectileScale : 1f;
+        _hasPendingShot = true;
+
         _attackCooldown = _combatSettings.AttackInterval / Mathf.Max(0.01f, attackSpeed);
+    }
+
+    public void TriggerAnimationProjectileRelease()
+    {
+        if (!_hasPendingShot) return;
+
+        EnemyController target = _pendingEnemy != null ? _pendingEnemy : _enemy;
+        float damage = _pendingDamage;
+        float scale = _pendingProjectileScale;
+        ClearPendingShot();
+
+        if (target == null || !target.IsAlive) return;
+
+        SpiritProjectile prefab = _view != null ? _view.ProjectilePrefab : null;
+        if (prefab != null)
+        {
+            Transform spawnPoint = _view.ProjectileSpawnPoint;
+            Vector3 direction = target.transform.position - spawnPoint.position;
+            direction.y = 0f;
+            Quaternion rotation = direction.sqrMagnitude > 0.001f
+                ? Quaternion.LookRotation(direction.normalized)
+                : transform.rotation;
+
+            SpiritProjectile projectile = Instantiate(prefab, spawnPoint.position, rotation);
+            projectile.Initialize(target, damage, scale);
+        }
+        else
+        {
+            target.TakeDamage(damage);
+        }
+    }
+
+    private void FaceDirection(Vector3 flatDirection)
+    {
+        flatDirection.y = 0f;
+        if (flatDirection.sqrMagnitude <= 0.0001f) return;
+
+        Quaternion targetRot = Quaternion.LookRotation(flatDirection.normalized);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, _turnSpeed * Time.deltaTime);
     }
 
     private void UnregisterAttacker()
