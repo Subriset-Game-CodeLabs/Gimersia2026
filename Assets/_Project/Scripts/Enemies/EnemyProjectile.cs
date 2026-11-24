@@ -46,6 +46,7 @@ public class EnemyProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (Time.timeScale <= 0f) return;
         if (!_launched || _retired) return;
         if (_target == null || !_target.IsTargetable)
         {
@@ -89,6 +90,7 @@ public class EnemyProjectile : MonoBehaviour
             if (_phases != null)
             {
                 _phases.OnDayStart += HandleDayStart;
+                _phases.OnRewardStart += HandleDayStart;
                 _phases.OnRunFinished += Retire;
             }
         }
@@ -138,6 +140,7 @@ public class EnemyProjectile : MonoBehaviour
         if (_phases != null)
         {
             _phases.OnDayStart -= HandleDayStart;
+            _phases.OnRewardStart -= HandleDayStart;
             _phases.OnRunFinished -= Retire;
         }
         _phases = null;

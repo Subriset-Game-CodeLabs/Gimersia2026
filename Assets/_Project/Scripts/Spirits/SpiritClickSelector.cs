@@ -42,6 +42,7 @@ public class SpiritClickSelector : MonoBehaviour
 
     private void OnClick(InputAction.CallbackContext context)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) { _clickPending = false; return; }
         Mouse mouse = Mouse.current;
         if (mouse == null) return;
 
@@ -59,6 +60,7 @@ public class SpiritClickSelector : MonoBehaviour
 
     private void ProcessClick(Vector2 screenPosition)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
 
         if (_camera == null) _camera = Camera.main;

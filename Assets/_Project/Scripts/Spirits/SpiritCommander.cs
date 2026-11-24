@@ -6,6 +6,7 @@ public class SpiritCommander : MonoBehaviour
 
     public void MoveSelectedTo(Vector3 worldPoint)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (_selection == null || _selection.Selected.Count == 0) return;
 
         foreach (SpiritView spirit in _selection.Selected)
@@ -21,6 +22,7 @@ public class SpiritCommander : MonoBehaviour
 
     public void InteractSelected(IInteractable target)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (_selection == null || _selection.Selected.Count == 0) return;
 
         foreach (SpiritView spirit in _selection.Selected)
@@ -36,6 +38,7 @@ public class SpiritCommander : MonoBehaviour
 
     public void AttackSelected(EnemyController enemy, Bounds islandBounds)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (_selection == null || _selection.Selected.Count == 0) return;
 
         foreach (SpiritView spirit in _selection.Selected)

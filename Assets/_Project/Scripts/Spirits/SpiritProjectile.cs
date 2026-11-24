@@ -31,6 +31,7 @@ public class SpiritProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (Time.timeScale <= 0f) return;
         if (!_initialized) return;
 
         _lifetimeTimer -= Time.deltaTime;

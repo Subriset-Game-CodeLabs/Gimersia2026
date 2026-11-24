@@ -17,7 +17,7 @@ public class SpiritSpawner : MonoBehaviour
 
     public IReadOnlyList<SpiritView> Spirits => _spirits;
 
-    private void Awake()
+    private void Start()
     {
         SpawnSpirits();
     }
@@ -38,6 +38,8 @@ public class SpiritSpawner : MonoBehaviour
             SpiritView view = Instantiate(_spiritPrefabs[i], transform.position + offset, Quaternion.identity, transform);
             view.name = $"Spirit {i + 1} ({view.Element})";
             view.Initialize(i);
+            SpiritController controller = view.GetComponent<SpiritController>();
+            if (controller != null) controller.InitializeBuffs(PhaseManager.Instance != null ? PhaseManager.Instance.Buffs : null);
             _spirits.Add(view);
         }
     }

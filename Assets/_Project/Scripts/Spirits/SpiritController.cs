@@ -24,6 +24,8 @@ public class SpiritController : MonoBehaviour
     private NavMeshPath _path;
     private SpiritView _view;
     private SpiritAnimator _animator;
+    private StageBuffState _buffs;
+    public void InitializeBuffs(StageBuffState buffs) { _buffs = buffs; }
 
     private readonly Vector3[] _pathCorners = new Vector3[128];
     private bool _hasMovePath;
@@ -79,6 +81,7 @@ public class SpiritController : MonoBehaviour
 
     public void MoveTo(Vector3 worldPoint)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         CommandId++;
         if (_animator != null) _animator.NotifyPlayerInteraction();
         Stop();
@@ -87,6 +90,7 @@ public class SpiritController : MonoBehaviour
 
     public void Interact(IInteractable target)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (!IsLiveTarget(target) || !target.CanInteract) return;
 
         CommandId++;
@@ -98,6 +102,7 @@ public class SpiritController : MonoBehaviour
 
     public void Attack(EnemyController enemy, Bounds islandBounds)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (enemy == null || !enemy.IsAlive || _combatSettings == null) return;
 
         CommandId++;
@@ -249,6 +254,8 @@ public class SpiritController : MonoBehaviour
 
     private void Update()
     {
+        // Scaled time alone does not prevent a ready swing or arrival from executing.
+        if (Time.timeScale <= 0f) return;
         if (_hasPendingShot && (_animator == null || !_animator.IsAttackInProgress))
         {
             TriggerAnimationProjectileRelease();
@@ -391,7 +398,7 @@ public class SpiritController : MonoBehaviour
         ElementSettings elements = registry != null ? registry.Settings : null;
         ElementType spiritElement = Element;
 
-        float damage = _combatSettings.Damage;
+        float damage = _combatSettings.Damage + (_buffs != null ? _buffs.GetTotal(BuffType.SpiritDamage) : 0f);
         float attackSpeed = 1f;
 
         if (elements != null)
@@ -406,6 +413,7 @@ public class SpiritController : MonoBehaviour
             }
         }
 
+        attackSpeed *= 1f + (_buffs != null ? _buffs.GetTotal(BuffType.SpiritAttackSpeed) : 0f);
         TeamworkSettings teamwork = _combatSettings.TeamworkSettings;
         if (teamwork != null)
         {
@@ -434,6 +442,7 @@ public class SpiritController : MonoBehaviour
 
     public void TriggerAnimationProjectileRelease()
     {
+        if (Time.timeScale <= 0f) return;
         if (!_hasPendingShot) return;
 
         EnemyController target = _pendingEnemy != null ? _pendingEnemy : _enemy;

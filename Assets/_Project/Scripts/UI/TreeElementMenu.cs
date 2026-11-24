@@ -18,6 +18,7 @@ public class TreeElementMenu : MonoBehaviour
 
     private TreeNode _tree;
     private TreeRegistry _registry;
+    private PhaseManager _phases;
     private string _feedback = "";
     private void Awake()
     {
@@ -30,12 +31,15 @@ public class TreeElementMenu : MonoBehaviour
     }
     private void Start()
     {
+        _phases = PhaseManager.Instance;
+        if (_phases != null) _phases.OnRewardStart += HandleRewardStart;
         _registry = TreeRegistry.Instance;
         if (_registry != null)
             _registry.OnPowerChanged += Refresh;
     }
     private void OnDestroy()
     {
+        if (_phases != null) _phases.OnRewardStart -= HandleRewardStart;
         if (_registry != null)
             _registry.OnPowerChanged -= Refresh;
         if (_tree != null)
@@ -51,6 +55,7 @@ public class TreeElementMenu : MonoBehaviour
     }
     public void Open(TreeNode tree, Vector2 screenPosition)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (tree == null || !tree.IsTargetable ||
             !tree.Data.IsFullyGrown)
             return;
@@ -90,6 +95,7 @@ public class TreeElementMenu : MonoBehaviour
     private void ChooseLightning() => Choose(ElementType.Lightning);
     private void Choose(ElementType element)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) { Close(); return; }
         if (_tree == null || _registry == null ||
             _registry.Settings == null)
             return;
@@ -127,6 +133,7 @@ public class TreeElementMenu : MonoBehaviour
     }
     private void Heal()
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) { Close(); return; }
         if (_tree == null) return;
         if (_selection == null || _selection.Selected.Count == 0)
         {
@@ -145,6 +152,7 @@ public class TreeElementMenu : MonoBehaviour
         _commander.InteractSelected(work);
         Close();
     }
+    private void HandleRewardStart(int night) => Close();
     private void HandleTreeAvailabilityChanged(TreeNode tree)
     {
         if (tree == null || !tree.IsTargetable)

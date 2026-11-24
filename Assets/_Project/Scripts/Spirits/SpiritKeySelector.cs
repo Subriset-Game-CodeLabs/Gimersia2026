@@ -70,6 +70,7 @@ public class SpiritKeySelector : MonoBehaviour
 
     private void SetSlotPressed(int slotIndex, bool isPressed)
     {
+        if (isPressed && PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (_keyPressedStates[slotIndex] == isPressed) return;
         _keyPressedStates[slotIndex] = isPressed;
         OnKeyStateChanged?.Invoke(slotIndex, isPressed);
@@ -95,12 +96,14 @@ public class SpiritKeySelector : MonoBehaviour
     private void OnSelectAllCanceled(InputAction.CallbackContext ctx) => SetSlotPressed(3, false);
     private void OnSelectAllPerformed(InputAction.CallbackContext ctx)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (_selection != null)
             _selection.ToggleSelectAll();
     }
 
     private void SelectIndex(int index)
     {
+        if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
         if (_selection == null) return;
 
         bool isLeftShiftHeld = Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;

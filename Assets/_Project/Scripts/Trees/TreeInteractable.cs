@@ -10,6 +10,7 @@ public class TreeInteractable : MonoBehaviour, IInteractable
     private WorkerSet _workers;
     private float _progress;
     private bool _awaitingNewCommand;
+    private PhaseManager _phases;
 
     public float Progress01
     {
@@ -28,8 +29,15 @@ public class TreeInteractable : MonoBehaviour, IInteractable
         _node = GetComponent<TreeNode>();
     }
 
+    private void Start()
+    {
+        // Island generation may initialize this tree before PhaseManager.Awake.
+        _phases = PhaseManager.Instance;
+    }
+
     public void Initialize(TeamworkSettings teamwork)
     {
+        _phases = PhaseManager.Instance;
         _node = GetComponent<TreeNode>();
         _workers = new WorkerSet(teamwork);
 
@@ -132,7 +140,8 @@ public class TreeInteractable : MonoBehaviour, IInteractable
         float multiplier = registry != null
             ? registry.GetGrowthTimeMultiplier(_node.Data.Element)
             : 1f;
-        return baseDuration * multiplier;
+        float bonus = _phases != null && _phases.Buffs != null ? _phases.Buffs.GetTotal(BuffType.TreeGrowthSpeed) : 0f;
+        return baseDuration * multiplier / (1f + bonus);
     }
 
     private void OnDisable()

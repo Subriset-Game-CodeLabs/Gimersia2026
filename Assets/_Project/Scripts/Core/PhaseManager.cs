@@ -8,6 +8,16 @@ public class PhaseManager : MonoBehaviour
     public static PhaseManager Instance { get; private set; }
 
     [SerializeField] private PhaseSettings _settings;
+    [SerializeField] private NightRewardController _rewards;
+    [SerializeField] private WinLoseChecker _results;
+    public NightRewardController Rewards => _rewards;
+    public StageBuffState Buffs => _rewards != null ? _rewards.State : null;
+    public event Action<int> OnRewardStart;
+    private int _inputBlockedFrame = -1;
+    private float _preRewardTimeScale = 1f;
+    private bool _rewardPaused;
+    public bool GameplayInputAllowed => (CurrentPhase == PhaseType.Day || CurrentPhase == PhaseType.Night)
+        && Time.frameCount > _inputBlockedFrame && (_results == null || _results.Result == RunResult.Playing);
 
     // The int is the day or night number (1 to TotalDays).
     public event Action<int> OnDayStart;
@@ -21,7 +31,7 @@ public class PhaseManager : MonoBehaviour
     public float TimeRemaining { get; private set; }
     public float PhaseDuration { get; private set; }
     public int TotalDays => _settings.TotalDays;
-    public bool CanStartNightEarly => CurrentPhase == PhaseType.Day;
+    public bool CanStartNightEarly => CurrentPhase == PhaseType.Day && GameplayInputAllowed;
 
     private bool _started;
 
@@ -32,7 +42,21 @@ public class PhaseManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_results != null) _results.OnResult -= HandleResult;
         if (Instance == this) Instance = null;
+    }
+
+    private void Start()
+    {
+        if (_results == null) _results = FindAnyObjectByType<WinLoseChecker>();
+        if (_results != null) _results.OnResult += HandleResult;
+        else Debug.LogError("PhaseManager requires a WinLoseChecker for reward/result priority.", this);
+        if (_rewards == null) Debug.LogError("Assign NightRewardController to PhaseManager.Rewards; non-final nights will block until configured.", this);
+    }
+
+    private void HandleResult(RunResult result)
+    {
+        if (result != RunResult.Playing) Finish();
     }
 
     private void Update()
@@ -42,6 +66,7 @@ public class PhaseManager : MonoBehaviour
         if (!_started)
         {
             _started = true;
+            if (_results != null && _results.Result != RunResult.Playing) return;
             BeginDay(1);
         }
 
@@ -62,7 +87,27 @@ public class PhaseManager : MonoBehaviour
     public void CompleteNight()
     {
         if (CurrentPhase != PhaseType.Night) return;
+        if (_results == null || _results.Result != RunResult.Playing) return;
+        // An empty forest must lose, even if wave completion arrives before the tree-death listener.
+        if (TreeRegistry.Instance != null && TreeRegistry.Instance.AliveCount == 0)
+        {
+            Finish();
+            return;
+        }
         AdvancePhase();
+    }
+
+    public bool CanCompleteReward(NightRewardController owner) => owner != null && owner == _rewards
+        && CurrentPhase == PhaseType.RewardSelection && _results != null && _results.Result == RunResult.Playing;
+
+    public bool CompleteReward(NightRewardController owner)
+    {
+        if (!CanCompleteReward(owner)) return false;
+        _inputBlockedFrame = Time.frameCount; // Do not let the selecting click reach the world this frame.
+        if (_rewardPaused) Time.timeScale = _preRewardTimeScale;
+        _rewardPaused = false;
+        BeginDay(CurrentDay + 1);
+        return true;
     }
 
     private void AdvancePhase()
@@ -77,7 +122,16 @@ public class PhaseManager : MonoBehaviour
         }
         else
         {
-            BeginDay(CurrentDay + 1);
+            CurrentPhase = PhaseType.RewardSelection;
+            TimeRemaining = PhaseDuration = 0f;
+            _inputBlockedFrame = Time.frameCount;
+            _preRewardTimeScale = Time.timeScale;
+            _rewardPaused = true;
+            Time.timeScale = 0f;
+            OnRewardStart?.Invoke(CurrentDay);
+            if (CurrentPhase != PhaseType.RewardSelection) return;
+            if (_rewards != null) _rewards.BeginSelection();
+            else Debug.LogError("Night cleared but Rewards is missing. Assign NightRewardController; no reward is skipped.", this);
         }
     }
 
@@ -100,7 +154,10 @@ public class PhaseManager : MonoBehaviour
 
     private void Finish()
     {
+        if (_started && CurrentPhase == PhaseType.Finished) return;
+        _started = true;
         CurrentPhase = PhaseType.Finished;
+        _rewardPaused = false; // Result owns the pause; cancellation must never restore time scale.
         TimeRemaining = 0f;
         OnRunFinished?.Invoke();
     }
