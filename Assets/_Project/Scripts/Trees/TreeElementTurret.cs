@@ -310,7 +310,7 @@ public class TreeElementTurret : MonoBehaviour
         {
             if (_useElementalMatrix)
             {
-                damage *= settings.GetDamageMultiplier(treeElement, target.Definition.Element);
+                damage *= target.Definition.GetDamageMultiplierFrom(treeElement, settings);
             }
 
             if (_useGlobalElementBuff && treeElement != ElementType.None)

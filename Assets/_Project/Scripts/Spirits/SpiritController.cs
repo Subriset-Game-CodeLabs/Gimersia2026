@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -6,11 +7,13 @@ public enum SpiritState { Idle, Moving, Interacting, Fighting }
 
 public class SpiritController : MonoBehaviour
 {
+    private static readonly List<SpiritController> ActiveSpirits = new List<SpiritController>();
+
     [Header("Movement")]
     [SerializeField] private float _moveSpeed = 4f;
     [SerializeField] private float _arriveDistance = 0.05f;
     [SerializeField, Range(0.05f, 2f)] private float _destinationSampleRadius = 1f;
-    [SerializeField, Min(0.05f)] private float _pursuitRepathInterval = 0.25f;
+    [SerializeField, Min(0.05f)] private float _pursuitRepathInterval = 0.3f;
     [SerializeField] private float _turnSpeed = 12f;
 
     [Header("Combat & Projectile")]
@@ -19,6 +22,8 @@ public class SpiritController : MonoBehaviour
     [SerializeField, Min(1f)] private float _specialAttackDamageMultiplier = 1.6f;
     [Tooltip("Skala ukuran prefab projectile 3D sphere saat Special Attack.")]
     [SerializeField, Min(1f)] private float _specialProjectileScale = 1.65f;
+    [Tooltip("Jarak antar Spirit saat berjejer di bibir pantai ketika 2-3 Spirit menyerang bersamaan.")]
+    [SerializeField, Min(0.2f)] private float _shoreFormationSpacing = 0.85f;
 
     private NavMeshAgent _agent;
     private NavMeshPath _path;
@@ -35,22 +40,33 @@ public class SpiritController : MonoBehaviour
     private Vector3 _target;
     private IInteractable _interactable;
     private EnemyController _enemy;
+    private Vector3 _lastKnownEnemyPos;
     private Bounds _islandBounds;
     private float _attackCooldown;
     private bool _registeredAsAttacker;
+
+    // State mesin bertarung
+    private int _formationSlotIndex;
+    private int _formationSlotCount = 1;
+    private bool _hasReachedShoreWaitSpot;
+    private Vector3 _lockedShoreSpot;
+    private bool _wasTargetHiddenUnderwater;
+    private bool _hasEngagedCurrentTarget;
+    private float _offIslandOutOfRangeTimer;
 
     private bool _hasPendingShot;
     private float _pendingDamage;
     private float _pendingProjectileScale;
     private EnemyController _pendingEnemy;
 
+    public SpiritCombatSettings CombatSettings => _combatSettings;
     public SpiritState State { get; private set; } = SpiritState.Idle;
     public bool IsChasingEnemy { get; private set; }
     public ElementType Element => _view != null ? _view.Element : ElementType.None;
     public int CommandId { get; private set; }
 
     private float ArrivalDistance => State == SpiritState.Fighting
-        ? Mathf.Max(0.01f, _arriveDistance)
+        ? Mathf.Max(0.05f, _arriveDistance)
         : Mathf.Max(Mathf.Max(0.01f, _arriveDistance), _agent.radius * 2f + 0.05f);
 
     public event Action OnArrived;
@@ -66,11 +82,15 @@ public class SpiritController : MonoBehaviour
         if (_agent != null)
             _agent.autoRepath = false;
 
+        if (!ActiveSpirits.Contains(this))
+            ActiveSpirits.Add(this);
+
         enabled = false;
     }
 
     private void OnDestroy()
     {
+        ActiveSpirits.Remove(this);
         Stop();
     }
 
@@ -100,10 +120,11 @@ public class SpiritController : MonoBehaviour
         BeginMove(target.InteractionPoint);
     }
 
-    public void Attack(EnemyController enemy, Bounds islandBounds)
+    public void Attack(EnemyController enemy, Bounds islandBounds, int formationSlotIndex = 0, int formationSlotCount = 1)
     {
         if (PhaseManager.Instance != null && !PhaseManager.Instance.GameplayInputAllowed) return;
-        if (enemy == null || !enemy.IsAlive || _combatSettings == null) return;
+        if (_combatSettings == null || enemy == null || !enemy.IsTargetableBySpirit)
+            return;
 
         CommandId++;
         if (_animator != null) _animator.NotifyPlayerInteraction();
@@ -111,14 +132,25 @@ public class SpiritController : MonoBehaviour
         if (!NavigationReady()) return;
 
         _enemy = enemy;
+        _lastKnownEnemyPos = enemy.transform.position;
         _islandBounds = islandBounds;
         _attackCooldown = 0f;
         _nextPursuitRepath = 0f;
+        _hasReachedShoreWaitSpot = false;
+        _wasTargetHiddenUnderwater = false;
+        _hasEngagedCurrentTarget = false;
+        _offIslandOutOfRangeTimer = 0f;
 
-        if (!InsideIsland(transform.position))
+        if (formationSlotCount <= 1)
         {
-            Stop();
-            return;
+            int existingAttackers = CountOtherSpiritsTargeting(enemy);
+            _formationSlotIndex = existingAttackers;
+            _formationSlotCount = existingAttackers + 1;
+        }
+        else
+        {
+            _formationSlotIndex = Mathf.Clamp(formationSlotIndex, 0, formationSlotCount - 1);
+            _formationSlotCount = formationSlotCount;
         }
 
         SetState(SpiritState.Fighting);
@@ -130,6 +162,10 @@ public class SpiritController : MonoBehaviour
         UnregisterAttacker();
         _enemy = null;
         IsChasingEnemy = false;
+        _hasReachedShoreWaitSpot = false;
+        _wasTargetHiddenUnderwater = false;
+        _hasEngagedCurrentTarget = false;
+        _offIslandOutOfRangeTimer = 0f;
         ClearPendingShot();
     }
 
@@ -195,16 +231,24 @@ public class SpiritController : MonoBehaviour
 
     private bool InsideIsland(Vector3 point)
     {
-        return IsFinite(point) && point.x >= _islandBounds.min.x && point.x <= _islandBounds.max.x
-            && point.z >= _islandBounds.min.z && point.z <= _islandBounds.max.z;
+        if (!IsFinite(point)) return false;
+        if (_islandBounds.size.sqrMagnitude > 0.01f)
+        {
+            return point.x >= _islandBounds.min.x && point.x <= _islandBounds.max.x
+                && point.z >= _islandBounds.min.z && point.z <= _islandBounds.max.z;
+        }
+        return true;
     }
 
-    private bool TryBeginPath(Vector3 worldPoint, bool constrainToIsland)
+    private bool TryBeginPath(Vector3 worldPoint, bool constrainToIsland, float customSampleRadius = -1f)
     {
         if (!NavigationReady() || !IsFinite(worldPoint)) return false;
         var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = _agent.areaMask };
-        if (!NavMesh.SamplePosition(worldPoint, out NavMeshHit hit,
-            Mathf.Clamp(_destinationSampleRadius, 0.05f, 2f), filter)
+        float sampleRadius = customSampleRadius > 0f
+            ? customSampleRadius
+            : Mathf.Clamp(_destinationSampleRadius, 0.05f, 2f);
+
+        if (!NavMesh.SamplePosition(worldPoint, out NavMeshHit hit, sampleRadius, filter)
             || !_agent.CalculatePath(hit.position, _path)
             || _path.status != NavMeshPathStatus.PathComplete)
             return false;
@@ -216,6 +260,12 @@ public class SpiritController : MonoBehaviour
             if (count == _pathCorners.Length) return false;
             for (int i = 0; i < count; i++)
                 if (!InsideIsland(_pathCorners[i])) return false;
+        }
+
+        if (State == SpiritState.Fighting && FlatDistance(transform.position, hit.position) <= 0.18f)
+        {
+            StopNavigation();
+            return true;
         }
 
         _agent.speed = Mathf.Max(0f, _moveSpeed);
@@ -249,12 +299,11 @@ public class SpiritController : MonoBehaviour
         _hasMovePath = false;
         if (_agent == null || !_agent.isActiveAndEnabled || !_agent.isOnNavMesh) return;
         _agent.isStopped = true;
-        _agent.ResetPath();
+        if (_agent.hasPath || _agent.pathPending) _agent.ResetPath();
     }
 
     private void Update()
     {
-        // Scaled time alone does not prevent a ready swing or arrival from executing.
         if (Time.timeScale <= 0f) return;
         if (_hasPendingShot && (_animator == null || !_animator.IsAttackInProgress))
         {
@@ -324,54 +373,151 @@ public class SpiritController : MonoBehaviour
         _interactable.Interact(this, Time.deltaTime);
     }
 
+    private float GetEffectiveAttackRange(EnemyController targetEnemy)
+    {
+        if (_combatSettings == null || targetEnemy == null) return 0f;
+        return targetEnemy.IsOffIslandOrFlying
+            ? _combatSettings.SeaEnemyTargetableRadiusFromIsland
+            : _combatSettings.AttackRange;
+    }
+
     private void UpdateFighting()
     {
-        if (!NavigationReady() || _enemy == null || !_enemy.IsAlive || _combatSettings == null
-            || !InsideIsland(transform.position))
+        if (!NavigationReady() || _combatSettings == null)
         {
             Stop();
             return;
         }
 
-        Vector3 toEnemy = _enemy.transform.position - transform.position;
-        toEnemy.y = 0f;
-        float distance = toEnemy.magnitude;
-        float range = _combatSettings.AttackRange;
-
-        if (distance > range)
+        // 1. Jika musuh target benar-benar mati:
+        //    Cari musuh lain yang SUDAH berada di dalam Attack Range Spirit; jika tidak ada, langsung Idle di tempat.
+        if (_enemy == null || !_enemy.IsAlive)
         {
-            IsChasingEnemy = true;
-            UnregisterAttacker();
-
-            if (_hasMovePath && !_agent.pathPending && !PathIsValid())
+            if (!TryAutoChainEnemyInRange())
             {
                 Stop();
                 return;
             }
-            if (!_hasMovePath || Time.time >= _nextPursuitRepath)
-            {
-                Vector3 destination = _enemy.transform.position;
-                destination.x = Mathf.Clamp(destination.x, _islandBounds.min.x, _islandBounds.max.x);
-                destination.z = Mathf.Clamp(destination.z, _islandBounds.min.z, _islandBounds.max.z);
-                destination.y = transform.position.y;
-                if (!TryBeginPath(destination, true))
-                {
-                    Stop();
-                    return;
-                }
-                Vector3 toEndpoint = _target - _enemy.transform.position;
-                toEndpoint.y = 0f;
-                if (toEndpoint.sqrMagnitude > range * range)
-                {
-                    Stop();
-                    return;
-                }
-                _nextPursuitRepath = Time.time + Mathf.Max(0.05f, _pursuitRepathInterval);
-            }
-            if (!_agent.pathPending && HasArrived()) Stop();
+        }
+
+        // 2. Khusus Worm yang sedang menyelam sementara:
+        //    Spirit tetap menunggu (Idle) di tepi pantai sampai Worm muncul kembali.
+        if (_enemy.IsHiddenUnderwater)
+        {
+            _wasTargetHiddenUnderwater = true;
+            UnregisterAttacker();
+            ClearPendingShot();
+            MoveToOrWaitAtShoreEdge(_lastKnownEnemyPos);
             return;
         }
 
+        // 3. Begitu Worm muncul kembali ke permukaan laut:
+        //    - Jika masih dalam Attack Range -> lanjut serang Worm.
+        //    - Jika di luar Attack Range -> auto-chain ke musuh lain dalam Attack Range;
+        //      jika tidak ada musuh lain dalam Attack Range, bergerak ke tepi pantai terdekat Worm (termasuk saat di LastPoint).
+        if (_wasTargetHiddenUnderwater)
+        {
+            _wasTargetHiddenUnderwater = false;
+            float emergeDist = FlatDistance(transform.position, _enemy.transform.position);
+            float emergeRange = GetEffectiveAttackRange(_enemy);
+
+            if (emergeDist > emergeRange)
+            {
+                if (TryAutoChainEnemyInRange())
+                {
+                    return;
+                }
+
+                _hasReachedShoreWaitSpot = false;
+                _hasEngagedCurrentTarget = false;
+                _offIslandOutOfRangeTimer = 0f;
+            }
+        }
+
+        _lastKnownEnemyPos = _enemy.transform.position;
+
+        Vector3 toEnemy = _enemy.transform.position - transform.position;
+        toEnemy.y = 0f;
+        float distance = toEnemy.magnitude;
+        float effectiveRange = GetEffectiveAttackRange(_enemy);
+
+        // =====================================================================
+        // KHUSUS WORM DI LASTPOINT:
+        // Spirit berjalan dulu ke tepi pulau, lalu langsung menyerang & menembakkan proyektil
+        // meskipun Worm di LastPoint berada di luar Attack Range!
+        // =====================================================================
+        if (_enemy.IsWormAtLastPoint)
+        {
+            if (!_hasReachedShoreWaitSpot)
+            {
+                UnregisterAttacker();
+                MoveToOrWaitAtShoreEdge(_enemy.transform.position);
+                if (!_hasReachedShoreWaitSpot)
+                    return;
+            }
+
+            ExecuteRangedAttackAtCurrentPosition(toEnemy, distance);
+            return;
+        }
+
+        // =====================================================================
+        // KONDISI A: Musuh SUDAH berada di dalam Attack Range dari posisi Spirit
+        // =====================================================================
+        if (distance <= effectiveRange)
+        {
+            ExecuteRangedAttackAtCurrentPosition(toEnemy, distance);
+            return;
+        }
+
+        // =====================================================================
+        // KONDISI B: Musuh berada DI LUAR Attack Range dari posisi Spirit
+        // =====================================================================
+        UnregisterAttacker();
+
+        // B1. Musuh berada di luar pulau (Laut: Skeleton/Monster/Worm awal, atau Terbang: Bat)
+        if (_enemy.IsOffIslandOrFlying)
+        {
+            if (_hasEngagedCurrentTarget)
+            {
+                if (_enemy.IsWorm)
+                {
+                    _hasReachedShoreWaitSpot = false;
+                    _hasEngagedCurrentTarget = false;
+                }
+                else
+                {
+                    _offIslandOutOfRangeTimer += Time.deltaTime;
+                    if (_offIslandOutOfRangeTimer < _combatSettings.OffIslandOutOfRangeChaseDelay)
+                    {
+                        IsChasingEnemy = false;
+                        StopNavigation();
+                        if (distance > 0.001f) FaceDirection(toEnemy);
+                        return;
+                    }
+
+                    _hasReachedShoreWaitSpot = false;
+                    _hasEngagedCurrentTarget = false;
+                    _offIslandOutOfRangeTimer = 0f;
+                }
+            }
+
+            MoveToOrWaitAtShoreEdge(_enemy.transform.position);
+            return;
+        }
+
+        // B2. Musuh berada di DALAM pulau (di luar Attack Range)
+        if (_hasEngagedCurrentTarget && TryAutoChainEnemyInRange())
+        {
+            return;
+        }
+
+        PursueOnIsland(_enemy.transform.position);
+    }
+
+    private void ExecuteRangedAttackAtCurrentPosition(Vector3 toEnemy, float distance)
+    {
+        _hasEngagedCurrentTarget = true;
+        _offIslandOutOfRangeTimer = 0f;
         IsChasingEnemy = false;
         StopNavigation();
 
@@ -392,6 +538,174 @@ public class SpiritController : MonoBehaviour
         BeginAttackSwing();
     }
 
+    private void PursueOnIsland(Vector3 enemyWorldPos)
+    {
+        _hasReachedShoreWaitSpot = false;
+        Vector3 queryPos = new Vector3(enemyWorldPos.x, transform.position.y, enemyWorldPos.z);
+
+        var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = _agent.areaMask };
+        if (NavMesh.SamplePosition(queryPos, out NavMeshHit hit, 12f, filter) &&
+            FlatDistance(transform.position, hit.position) <= 0.2f)
+        {
+            IsChasingEnemy = false;
+            StopNavigation();
+            FaceDirection(enemyWorldPos - transform.position);
+            return;
+        }
+
+        IsChasingEnemy = true;
+        if (!_hasMovePath || Time.time >= _nextPursuitRepath)
+        {
+            _nextPursuitRepath = Time.time + Mathf.Max(0.05f, _pursuitRepathInterval);
+            if (!TryBeginPath(queryPos, false, 12f))
+            {
+                Stop();
+            }
+        }
+    }
+
+    private void MoveToOrWaitAtShoreEdge(Vector3 referenceEnemyPos)
+    {
+        if (!TryResolveShoreStandOffPoint(_enemy, out Vector3 desiredShoreSpot))
+        {
+            IsChasingEnemy = false;
+            StopNavigation();
+            FaceDirection(referenceEnemyPos - transform.position);
+            return;
+        }
+
+        if (_hasReachedShoreWaitSpot)
+        {
+            IsChasingEnemy = false;
+            StopNavigation();
+            FaceDirection(referenceEnemyPos - transform.position);
+            return;
+        }
+
+        float distToSpot = FlatDistance(transform.position, desiredShoreSpot);
+        float arriveThreshold = Mathf.Max(0.32f, _agent.radius * 2.4f);
+        bool agentFinished = _hasMovePath && !_agent.pathPending && (!_agent.hasPath || _agent.remainingDistance <= 0.12f);
+
+        if (distToSpot <= arriveThreshold || agentFinished)
+        {
+            _hasReachedShoreWaitSpot = true;
+            _lockedShoreSpot = transform.position;
+            IsChasingEnemy = false;
+            StopNavigation();
+            FaceDirection(referenceEnemyPos - transform.position);
+            return;
+        }
+
+        IsChasingEnemy = true;
+        if (!_hasMovePath || Time.time >= _nextPursuitRepath)
+        {
+            _nextPursuitRepath = Time.time + Mathf.Max(0.05f, _pursuitRepathInterval);
+            if (!TryBeginPath(desiredShoreSpot, false, 2.5f))
+            {
+                _hasReachedShoreWaitSpot = true;
+                _lockedShoreSpot = transform.position;
+                IsChasingEnemy = false;
+                StopNavigation();
+            }
+        }
+    }
+
+    private bool TryResolveShoreStandOffPoint(EnemyController offIslandEnemy, out Vector3 standOffPoint)
+    {
+        standOffPoint = transform.position;
+        if (offIslandEnemy == null || !offIslandEnemy.TryGetNearestIslandShorePoint(out Vector3 shoreEdge))
+            return false;
+
+        Vector3 inwardDir = shoreEdge - offIslandEnemy.transform.position;
+        inwardDir.y = 0f;
+        inwardDir = inwardDir.sqrMagnitude > 0.0001f ? inwardDir.normalized : Vector3.zero;
+
+        float standOff = _combatSettings.ShoreStandOffDistance + (_agent != null ? _agent.radius * 0.5f : 0.1f);
+        Vector3 baseSpot = shoreEdge + inwardDir * standOff;
+
+        Vector3 lateral = Vector3.Cross(Vector3.up, inwardDir);
+        float centeredOffset = (_formationSlotIndex - (_formationSlotCount - 1) * 0.5f) * _shoreFormationSpacing;
+        Vector3 desiredPoint = baseSpot + lateral * centeredOffset;
+
+        var filter = new NavMeshQueryFilter { agentTypeID = _agent.agentTypeID, areaMask = _agent.areaMask };
+        if (NavMesh.SamplePosition(desiredPoint, out NavMeshHit hit, 1.5f, filter))
+        {
+            standOffPoint = hit.position;
+            return true;
+        }
+
+        if (NavMesh.SamplePosition(baseSpot, out NavMeshHit baseHit, 1.5f, filter))
+        {
+            standOffPoint = baseHit.position;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryAutoChainEnemyInRange()
+    {
+        UnregisterAttacker();
+        ClearPendingShot();
+
+        EnemyController bestNext = null;
+        int bestTargeterCount = int.MaxValue;
+        float bestSqrDist = float.MaxValue;
+
+        for (int i = 0; i < EnemyController.ActiveEnemies.Count; i++)
+        {
+            EnemyController candidate = EnemyController.ActiveEnemies[i];
+            if (candidate == null || candidate == _enemy || !candidate.IsTargetableBySpirit)
+                continue;
+
+            float dx = candidate.transform.position.x - transform.position.x;
+            float dz = candidate.transform.position.z - transform.position.z;
+            float sqrDistFromSpirit = dx * dx + dz * dz;
+
+            float candidateRange = GetEffectiveAttackRange(candidate);
+            if (sqrDistFromSpirit > candidateRange * candidateRange)
+                continue;
+
+            int otherTargeters = CountOtherSpiritsTargeting(candidate);
+
+            if (otherTargeters < bestTargeterCount ||
+                (otherTargeters == bestTargeterCount && sqrDistFromSpirit < bestSqrDist))
+            {
+                bestTargeterCount = otherTargeters;
+                bestSqrDist = sqrDistFromSpirit;
+                bestNext = candidate;
+            }
+        }
+
+        if (bestNext == null)
+            return false;
+
+        _enemy = bestNext;
+        _lastKnownEnemyPos = bestNext.transform.position;
+        _hasReachedShoreWaitSpot = false;
+        _wasTargetHiddenUnderwater = false;
+        _hasEngagedCurrentTarget = false;
+        _offIslandOutOfRangeTimer = 0f;
+        _nextPursuitRepath = 0f;
+        IsChasingEnemy = false;
+        StopNavigation();
+        return true;
+    }
+
+    private int CountOtherSpiritsTargeting(EnemyController targetEnemy)
+    {
+        if (targetEnemy == null) return 0;
+        int count = 0;
+        for (int i = 0; i < ActiveSpirits.Count; i++)
+        {
+            SpiritController other = ActiveSpirits[i];
+            if (other == null || other == this) continue;
+            if (other.State == SpiritState.Fighting && other._enemy == targetEnemy)
+                count++;
+        }
+        return count;
+    }
+
     private void BeginAttackSwing()
     {
         TreeRegistry registry = TreeRegistry.Instance;
@@ -399,17 +713,17 @@ public class SpiritController : MonoBehaviour
         ElementType spiritElement = Element;
 
         float damage = _combatSettings.Damage + (_buffs != null ? _buffs.GetTotal(BuffType.SpiritDamage) : 0f);
-        float attackSpeed = 1f;
+        float attackSpeed = _combatSettings.BaseAttackSpeedMultiplier;
 
-        if (elements != null)
+        if (elements != null && _enemy != null && _enemy.Definition != null)
         {
-            damage *= elements.GetDamageMultiplier(spiritElement, _enemy.Definition.Element);
+            damage *= _enemy.Definition.GetDamageMultiplierFrom(spiritElement, elements);
 
             if (spiritElement != ElementType.None)
             {
                 int power = registry.GetTotalPower(spiritElement);
                 damage *= elements.GetDamageBonusMultiplier(power);
-                attackSpeed = registry.GetAttackSpeedMultiplier(spiritElement);
+                attackSpeed *= registry.GetAttackSpeedMultiplier(spiritElement);
             }
         }
 
@@ -450,7 +764,7 @@ public class SpiritController : MonoBehaviour
         float scale = _pendingProjectileScale;
         ClearPendingShot();
 
-        if (target == null || !target.IsAlive) return;
+        if (target == null || !target.IsTargetableBySpirit) return;
 
         SpiritProjectile prefab = _view != null ? _view.ProjectilePrefab : null;
         if (prefab != null)
@@ -467,7 +781,7 @@ public class SpiritController : MonoBehaviour
         }
         else
         {
-            target.TakeDamage(damage);
+            target.TakeDamage(damage, transform.position);
         }
     }
 
@@ -478,6 +792,13 @@ public class SpiritController : MonoBehaviour
 
         Quaternion targetRot = Quaternion.LookRotation(flatDirection.normalized);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, _turnSpeed * Time.deltaTime);
+    }
+
+    private static float FlatDistance(Vector3 a, Vector3 b)
+    {
+        float dx = a.x - b.x;
+        float dz = a.z - b.z;
+        return Mathf.Sqrt(dx * dx + dz * dz);
     }
 
     private void UnregisterAttacker()

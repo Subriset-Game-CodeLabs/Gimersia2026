@@ -14,6 +14,7 @@ public class SpiritAnimator : MonoBehaviour
     [SerializeField] private Animator _animator;
     [SerializeField] private string _attackSpeedParam = "AttackSpeed";
     [SerializeField] private float _crossFadeDuration = 0.12f;
+    [SerializeField, Min(0.05f)] private float _minMoveVisualHold = 0.16f;
 
     [Header("1. Idle Utama (3 Animasi - 1 Lebih Sering)")]
     [SerializeField] private WeightedAnimState[] _mainIdleStates =
@@ -55,6 +56,7 @@ public class SpiritAnimator : MonoBehaviour
 
     private SpiritController _controller;
     private float _inactivityTimer;
+    private float _moveVisualStartedAt;
     private bool _isPlayingLongIdle;
     private bool _isMovingVisual;
     private bool _isAttackPlaying;
@@ -110,6 +112,7 @@ public class SpiritAnimator : MonoBehaviour
 
             case SpiritState.Moving:
                 _isMovingVisual = true;
+                _moveVisualStartedAt = Time.time;
                 CrossFadeTo(_moveStateName);
                 break;
 
@@ -122,11 +125,13 @@ public class SpiritAnimator : MonoBehaviour
                 if (_controller != null && _controller.IsChasingEnemy)
                 {
                     _isMovingVisual = true;
+                    _moveVisualStartedAt = Time.time;
                     CrossFadeTo(_moveStateName);
                 }
                 else
                 {
                     _isMovingVisual = false;
+                    PlayRandomIdle(forceLongIdle: false);
                 }
                 break;
         }
@@ -168,13 +173,17 @@ public class SpiritAnimator : MonoBehaviour
             if (chasing && !_isMovingVisual)
             {
                 _isMovingVisual = true;
+                _moveVisualStartedAt = Time.time;
                 _isAttackPlaying = false;
                 CrossFadeTo(_moveStateName);
             }
             else if (!chasing && _isMovingVisual)
             {
-                _isMovingVisual = false;
-                PlayRandomIdle(forceLongIdle: false);
+                if (Time.time - _moveVisualStartedAt >= _minMoveVisualHold)
+                {
+                    _isMovingVisual = false;
+                    PlayRandomIdle(forceLongIdle: false);
+                }
             }
             else if (!chasing && _isAttackPlaying && HasCurrentClipFinished(ignoreLoopFlag: true))
             {

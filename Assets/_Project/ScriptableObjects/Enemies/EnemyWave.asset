@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a097a236ab9cbb48bbfef8a9cf42260, type: 3}
+  m_Name: EnemyWave
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyWaveDefinition
+  _groups:
+  - _enemyDefinition: {fileID: 11400000, guid: 2626e77d35336cf49b29fdc4d5005417, type: 2}
+    _enemyPrefab: {fileID: 7959222860272486927, guid: e3e3486eaf7068d43abd5e647cc182f8, type: 3}
+    _spawnPointIds:
+    - Monster_1
+    - Monster_2
+    - Monster_3
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 5
+    _initialDelay: 2
+  - _enemyDefinition: {fileID: 11400000, guid: 6a5fd6a71c4fd9d4aa3b5396b1519f68, type: 2}
+    _enemyPrefab: {fileID: 4772325014094560857, guid: 4901e196761efb84fb4dfe87f397172b, type: 3}
+    _spawnPointIds:
+    - Monster_1
+    - Monster_2
+    - Monster_3
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 5
+    _initialDelay: 3
+  - _enemyDefinition: {fileID: 11400000, guid: 60871b05acb3da64d9396e4b3246e30c, type: 2}
+    _enemyPrefab: {fileID: 5780999997601242610, guid: 9cf24e67f470dfd4f911dec40d8bb2d8, type: 3}
+    _spawnPointIds:
+    - Skeleton_1
+    - Skeleton_2
+    - Skeleton_3
+    - Skeleton_4
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 2
+    _initialDelay: 4
+  - _enemyDefinition: {fileID: 11400000, guid: c93b42f1615b41d47a499d58e2b16e87, type: 2}
+    _enemyPrefab: {fileID: 1314879306631500610, guid: 1eb6b898445248b468d0fdca70af0f33, type: 3}
+    _spawnPointIds:
+    - Worm_1
+    - Worm_2
+    - Worm_3
+    - Worm_4
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 9
+    _initialDelay: 5

@@ -52,6 +52,7 @@ public class TreeNode : MonoBehaviour
 
     [Header("Polish & Feedback")]
     [SerializeField] private TreeVisualFeedback _visualFeedback;
+    private TreeUnderAttackIndicator _underAttackIndicator;
 
     public TreeData Data { get; private set; }
     public event Action<TreeNode> OnAvailabilityChanged;
@@ -77,6 +78,10 @@ public class TreeNode : MonoBehaviour
             if (worldCanvas != null)
                 _worldUiRoot = worldCanvas.transform;
         }
+
+        _underAttackIndicator = GetComponent<TreeUnderAttackIndicator>();
+        if (_underAttackIndicator == null)
+            _underAttackIndicator = gameObject.AddComponent<TreeUnderAttackIndicator>();
 
         SetGrowthVfxActive(false);
         SetElementChangeVfxActive(false);
@@ -130,8 +135,11 @@ public class TreeNode : MonoBehaviour
 
         UpdateWorldUiPosition();
 
+        Transform visualRoot = targetVisual != null ? targetVisual.transform : null;
         if (_visualFeedback != null)
-            _visualFeedback.SetActiveVisualRoot(targetVisual != null ? targetVisual.transform : null);
+            _visualFeedback.SetActiveVisualRoot(visualRoot);
+        if (_underAttackIndicator != null)
+            _underAttackIndicator.SetActiveVisualRoot(visualRoot);
 
         gameObject.SetActive(IsRevealed && Data.IsAlive);
         OnAvailabilityChanged?.Invoke(this);

@@ -65,7 +65,7 @@ public class SpiritProjectile : MonoBehaviour
     {
         if (_target != null && _target.IsAlive)
         {
-            _target.TakeDamage(_damage);
+            _target.TakeDamage(_damage, transform.position);
         }
 
         if (_hitVfxPrefab != null)

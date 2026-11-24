@@ -73,8 +73,6 @@ public class SpiritClickSelector : MonoBehaviour
             _clickLayers & Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide)) return;
 
         // 1. Klik Spirit:
-        //    - Tanpa Shift: klik sekali = pilih, klik ulang Spirit yang sama = batal pilih
-        //    - Dengan Left Shift: tambah/kurangi hingga maksimal 3 Spirit
         SpiritView spirit = hit.collider.GetComponentInParent<SpiritView>();
         if (spirit != null)
         {
@@ -88,11 +86,11 @@ public class SpiritClickSelector : MonoBehaviour
 
         bool hasSelectedSpirit = _selection != null && _selection.Selected.Count > 0;
 
-        // 2. Klik Musuh -> Butuh Spirit terpilih (otomatis unselect setelah diberi perintah)
+        // 2. Klik Musuh -> Dapat diklik di mana saja (termasuk di ujung laut); Spirit akan menuju tepi pulau
         EnemyController enemy = hit.collider.GetComponentInParent<EnemyController>();
         if (enemy != null)
         {
-            if (hasSelectedSpirit && enemy.IsAlive && _island.TryGetBounds(out Bounds islandBounds))
+            if (hasSelectedSpirit && _commander.CanAttackEnemy(enemy) && _island.TryGetBounds(out Bounds islandBounds))
                 _commander.AttackSelected(enemy, islandBounds);
             return;
         }
@@ -155,6 +153,13 @@ public class SpiritClickSelector : MonoBehaviour
 
             tile.TriggerClickFeedback(_selection.Selected);
             _commander.MoveSelectedTo(tile.MovementPoint);
+            return;
+        }
+
+        // 6. Fallback klik meleset tipis di permukaan air di dekat musuh bergerak yang valid
+        if (hasSelectedSpirit && _island.TryGetBounds(out Bounds fallbackBounds))
+        {
+            _commander.TryAttackNearClick(hit.point, fallbackBounds);
         }
     }
 }

@@ -24,6 +24,14 @@ public class EnemySpawner : MonoBehaviour
     public int RemainingSpawns => _progress.RemainingSpawns;
     public int AliveCount => _progress.AliveCount;
 
+    private void Awake()
+    {
+        if (FindFirstObjectByType<EnemyHoverSelector>() == null)
+        {
+            gameObject.AddComponent<EnemyHoverSelector>();
+        }
+    }
+
     private void Start()
     {
         _started = true;
@@ -46,7 +54,6 @@ public class EnemySpawner : MonoBehaviour
         _phases.OnNightStart += HandleNightStart;
         _phases.OnDayStart += HandleDayStart;
         _phases.OnRunFinished += HandleRunFinished;
-        // Re-enabling during a night restarts its wave; it must not leave an empty, endless night.
         if (_phases.CurrentPhase == PhaseType.Night && !_progress.IsActive)
             HandleNightStart(_phases.CurrentDay);
     }
@@ -115,7 +122,6 @@ public class EnemySpawner : MonoBehaviour
 
     private IEnumerator SpawnWave(List<ScheduledGroup> schedule)
     {
-        // Defer work until OnNightStart has finished notifying every subscriber.
         yield return null;
         foreach (ScheduledGroup group in schedule)
         {
@@ -123,7 +129,9 @@ public class EnemySpawner : MonoBehaviour
             for (int i = 0; i < group.Count; i++)
             {
                 if (!_progress.IsActive || _phases.CurrentPhase != PhaseType.Night) yield break;
-                if (group.Point == null || !group.Point.gameObject.activeInHierarchy ||
+
+                Transform chosenPoint = group.GetRandomInitialSpawnPoint();
+                if (chosenPoint == null || !chosenPoint.gameObject.activeInHierarchy ||
                     group.Prefab == null || group.Definition == null ||
                     (_enemiesParent != null && !_enemiesParent.gameObject.activeInHierarchy))
                 {
@@ -132,10 +140,11 @@ public class EnemySpawner : MonoBehaviour
                     Debug.LogError("Wave spawning stopped: a scheduled spawn reference was removed or disabled. Night will not auto-complete.", this);
                     yield break;
                 }
-                EnemyController enemy = Instantiate(group.Prefab, group.Point.position, group.Point.rotation, _enemiesParent);
+
+                EnemyController enemy = Instantiate(group.Prefab, chosenPoint.position, chosenPoint.rotation, _enemiesParent);
                 RegisterEnemy(enemy);
-                enemy.Initialize(group.Definition);
-                // This also separates adjacent one-enemy groups rather than spawning them together.
+                enemy.Initialize(group.Definition, group.SpawnPoints, group.DirectionPoints, group.LastPoints);
+
                 if (_progress.RemainingSpawns > 0)
                     yield return new WaitForSeconds(group.SpawnInterval);
             }
@@ -170,17 +179,47 @@ public class EnemySpawner : MonoBehaviour
         foreach (EnemySpawnGroup group in wave.Groups)
         {
             if (group == null || group.Count <= 0 || !IsFinite(group.SpawnInterval) || group.SpawnInterval <= 0f ||
-                !IsFinite(group.InitialDelay) || group.InitialDelay < 0f || string.IsNullOrWhiteSpace(group.SpawnPointId) ||
-                !_pointsById.TryGetValue(group.SpawnPointId, out Transform point))
-                return SetupError($"Wave '{wave.name}' needs positive counts/intervals, non-negative delays, and matching Spawn Point IDs.");
+                !IsFinite(group.InitialDelay) || group.InitialDelay < 0f)
+                return SetupError($"Wave '{wave.name}' needs positive counts/intervals and non-negative delays.");
+
+            List<string> resolvedIds = group.GetResolvedSpawnPointIds();
+            if (resolvedIds.Count == 0)
+                return SetupError($"Wave '{wave.name}' needs at least one Spawn Point ID per group.");
+
+            var spawnPoints = new List<Transform>();
+            var directionPoints = new List<Transform>();
+            var lastPoints = new List<Transform>();
+
+            for (int i = 0; i < resolvedIds.Count; i++)
+            {
+                string id = resolvedIds[i];
+                if (!_pointsById.TryGetValue(id, out Transform pt) || pt == null)
+                    return SetupError($"Wave '{wave.name}' references unknown Spawn Point ID '{id}'.");
+
+                if (id.IndexOf("Direction", StringComparison.OrdinalIgnoreCase) >= 0)
+                    directionPoints.Add(pt);
+                else if (id.IndexOf("Last", StringComparison.OrdinalIgnoreCase) >= 0)
+                    lastPoints.Add(pt);
+                else
+                    spawnPoints.Add(pt);
+            }
+
+            if (spawnPoints.Count == 0)
+            {
+                if (directionPoints.Count > 0) spawnPoints.AddRange(directionPoints);
+                else spawnPoints.AddRange(lastPoints);
+            }
+
             EnemyController prefab = group.EnemyPrefab != null ? group.EnemyPrefab : _enemyPrefab;
             EnemyDefinition definition = group.EnemyDefinition;
-            if (prefab == null || !prefab.gameObject.activeSelf || !prefab.enabled || prefab.GetComponent<NavMeshAgent>() == null)
-                return SetupError($"Wave '{wave.name}' needs an active enemy prefab with EnemyController and NavMeshAgent.");
+            if (prefab == null || !prefab.gameObject.activeSelf || !prefab.enabled)
+                return SetupError($"Wave '{wave.name}' needs an active enemy prefab with EnemyController.");
+            if (definition != null && definition.MovementArchetype == EnemyMovementArchetype.AmphibiousMelee && prefab.GetComponent<NavMeshAgent>() == null)
+                return SetupError($"AmphibiousMelee prefab '{prefab.name}' needs a NavMeshAgent.");
             if (!ValidateDefinition(definition)) return false;
             if (group.Count > int.MaxValue - count) return SetupError("Wave enemy count is too large.");
             count += group.Count;
-            schedule.Add(new ScheduledGroup(group, prefab, point));
+            schedule.Add(new ScheduledGroup(group, prefab, spawnPoints, directionPoints, lastPoints));
         }
         return true;
     }
@@ -212,19 +251,30 @@ public class EnemySpawner : MonoBehaviour
     {
         public readonly EnemyDefinition Definition;
         public readonly EnemyController Prefab;
-        public readonly Transform Point;
+        public readonly List<Transform> SpawnPoints;
+        public readonly List<Transform> DirectionPoints;
+        public readonly List<Transform> LastPoints;
         public readonly int Count;
         public readonly float SpawnInterval;
         public readonly float InitialDelay;
 
-        public ScheduledGroup(EnemySpawnGroup group, EnemyController prefab, Transform point)
+        public ScheduledGroup(EnemySpawnGroup group, EnemyController prefab,
+            List<Transform> spawnPoints, List<Transform> directionPoints, List<Transform> lastPoints)
         {
             Definition = group.EnemyDefinition;
             Prefab = prefab;
-            Point = point;
+            SpawnPoints = spawnPoints;
+            DirectionPoints = directionPoints;
+            LastPoints = lastPoints;
             Count = group.Count;
             SpawnInterval = group.SpawnInterval;
             InitialDelay = group.InitialDelay;
+        }
+
+        public Transform GetRandomInitialSpawnPoint()
+        {
+            if (SpawnPoints == null || SpawnPoints.Count == 0) return null;
+            return SpawnPoints[UnityEngine.Random.Range(0, SpawnPoints.Count)];
         }
     }
 }
