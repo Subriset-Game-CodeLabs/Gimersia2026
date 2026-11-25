@@ -11,7 +11,7 @@ public class SpiritView : MonoBehaviour
     [Header("Selection Indicators")]
     [SerializeField] private GameObject _selectionRing;
     [SerializeField] private GameObject _selectionTriangleIndicator;
-    [Tooltip("Objek 3D Cylinder di bawah Spirit yang menampilkan luas Attack Range saat Spirit dipilih.")]
+    [Tooltip("Objek 3D Cylinder di bawah Spirit yang muncul hanya saat Spirit terpilih DAN kursor meng-hover musuh.")]
     [SerializeField] private GameObject _attackRangeCylinder;
     [Tooltip("Aktifkan animasi bobbing & rotasi otomatis jika objek segitiga belum memiliki Animator sendiri.")]
     [SerializeField] private bool _useBuiltInTriangleMotion = true;
@@ -46,6 +46,24 @@ public class SpiritView : MonoBehaviour
         PrepareAttackRangeCylinder();
     }
 
+    private void OnEnable()
+    {
+        EnemyHoverSelector.OnHoveredEnemyChanged += HandleHoveredEnemyChanged;
+        UpdateAttackRangeCylinderVisibility();
+    }
+
+    private void OnDisable()
+    {
+        EnemyHoverSelector.OnHoveredEnemyChanged -= HandleHoveredEnemyChanged;
+        if (_attackRangeCylinder != null)
+            _attackRangeCylinder.SetActive(false);
+    }
+
+    private void HandleHoveredEnemyChanged(EnemyController hoveredEnemy)
+    {
+        UpdateAttackRangeCylinderVisibility();
+    }
+
     private void CacheTriangleTransform()
     {
         if (_selectionTriangleIndicator != null && !_hasCachedTrianglePos)
@@ -59,7 +77,6 @@ public class SpiritView : MonoBehaviour
     {
         if (_attackRangeCylinder == null) return;
 
-        // Nonaktifkan semua collider bawaan 3D Cylinder agar tidak menghalangi klik mouse pada tanah/musuh
         Collider[] colliders = _attackRangeCylinder.GetComponentsInChildren<Collider>(true);
         for (int i = 0; i < colliders.Length; i++)
         {
@@ -81,7 +98,6 @@ public class SpiritView : MonoBehaviour
             attackRange = _spiritController.CombatSettings.AttackRange;
         }
 
-        // Diameter 3D Cylinder standar Unity = 1 unit pada Scale (1, y, 1), sehingga diameter = AttackRange * 2
         float diameter = Mathf.Max(0.1f, attackRange * 2f);
         float parentScaleX = Mathf.Abs(transform.lossyScale.x) > 0.0001f ? Mathf.Abs(transform.lossyScale.x) : 1f;
         float parentScaleZ = Mathf.Abs(transform.lossyScale.z) > 0.0001f ? Mathf.Abs(transform.lossyScale.z) : 1f;
@@ -90,6 +106,20 @@ public class SpiritView : MonoBehaviour
         scale.x = diameter / parentScaleX;
         scale.z = diameter / parentScaleZ;
         _attackRangeCylinder.transform.localScale = scale;
+    }
+
+    private void UpdateAttackRangeCylinderVisibility()
+    {
+        if (_attackRangeCylinder == null) return;
+
+        EnemyController hovered = EnemyHoverSelector.CurrentHoveredEnemy;
+        bool shouldShow = IsSelected && hovered != null && hovered.IsTargetableBySpirit;
+
+        if (shouldShow)
+            SyncAttackRangeCylinderScale();
+
+        if (_attackRangeCylinder.activeSelf != shouldShow)
+            _attackRangeCylinder.SetActive(shouldShow);
     }
 
     public void Initialize(int index)
@@ -107,13 +137,7 @@ public class SpiritView : MonoBehaviour
         if (_selectionRing != null)
             _selectionRing.SetActive(selected);
 
-        if (_attackRangeCylinder != null)
-        {
-            if (selected)
-                SyncAttackRangeCylinderScale();
-
-            _attackRangeCylinder.SetActive(selected);
-        }
+        UpdateAttackRangeCylinderVisibility();
 
         if (_selectionTriangleIndicator != null)
         {
@@ -130,10 +154,14 @@ public class SpiritView : MonoBehaviour
 
     private void Update()
     {
-        if (!IsSelected) return;
+        if (!IsSelected)
+        {
+            if (_attackRangeCylinder != null && _attackRangeCylinder.activeSelf)
+                _attackRangeCylinder.SetActive(false);
+            return;
+        }
 
-        if (_attackRangeCylinder != null)
-            SyncAttackRangeCylinderScale();
+        UpdateAttackRangeCylinderVisibility();
 
         if (!_useBuiltInTriangleMotion || _selectionTriangleIndicator == null) return;
 

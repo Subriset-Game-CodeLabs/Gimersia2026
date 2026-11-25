@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -5,6 +6,7 @@ using UnityEngine.InputSystem;
 public class EnemyHoverSelector : MonoBehaviour
 {
     public static EnemyController CurrentHoveredEnemy { get; private set; }
+    public static event Action<EnemyController> OnHoveredEnemyChanged;
 
     [SerializeField] private SpiritSelection _selection;
     [SerializeField] private Camera _camera;
@@ -61,9 +63,12 @@ public class EnemyHoverSelector : MonoBehaviour
     {
         if (_hoveredEnemy == enemy) return;
         if (_hoveredEnemy != null) _hoveredEnemy.SetHovered(false);
+
         _hoveredEnemy = enemy;
         CurrentHoveredEnemy = enemy;
+
         if (_hoveredEnemy != null) _hoveredEnemy.SetHovered(true);
+        OnHoveredEnemyChanged?.Invoke(_hoveredEnemy);
     }
 
     private void OnDisable()
