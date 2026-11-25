@@ -1,0 +1,161 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a097a236ab9cbb48bbfef8a9cf42260, type: 3}
+  m_Name: EnemyWaveAllEnemy(WithoutBat)
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyWaveDefinition
+  _groups:
+  - _enemyDefinition: {fileID: 11400000, guid: 60871b05acb3da64d9396e4b3246e30c, type: 2}
+    _enemyPrefab: {fileID: 5780999997601242610, guid: 9cf24e67f470dfd4f911dec40d8bb2d8, type: 3}
+    _spawnPointIds:
+    - Skeleton_1
+    - Skeleton_2
+    - Skeleton_3
+    - Skeleton_4
+    - Skeleton_5
+    - Skeleton_6
+    - Skeleton_7
+    - Skeleton_8
+    - Skeleton_9
+    - Skeleton_10
+    - Skeleton_11
+    - Skeleton_12
+    - Skeleton_13
+    - Skeleton_14
+    - Skeleton_15
+    - Skeleton_16
+    - Skeleton_17
+    - Skeleton_18
+    - Skeleton_19
+    - Skeleton_20
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 8
+    _initialDelay: 20
+  - _enemyDefinition: {fileID: 11400000, guid: c93b42f1615b41d47a499d58e2b16e87, type: 2}
+    _enemyPrefab: {fileID: 1314879306631500610, guid: 1eb6b898445248b468d0fdca70af0f33, type: 3}
+    _spawnPointIds:
+    - Spawn_Worm_1
+    - Spawn_Worm_2
+    - Spawn_Worm_3
+    - Spawn_Worm_4
+    - Spawn_Worm_5
+    - Spawn_Worm_6
+    - Spawn_Worm_7
+    - Spawn_Worm_8
+    - Direction_Worm_1
+    - Direction_Worm_2
+    - Direction_Worm_3
+    - Direction_Worm_4
+    - Direction_Worm_5
+    - Direction_Worm_6
+    - Direction_Worm_7
+    - Direction_Worm_8
+    - Direction_Worm_9
+    - Direction_Worm_10
+    - Direction_Worm_11
+    - Direction_Worm_12
+    - Direction_Worm_13
+    - Direction_Worm_14
+    - Direction_Worm_15
+    - Direction_Worm_16
+    - Direction_Worm_17
+    - Direction_Worm_18
+    - Direction_Worm_19
+    - Direction_Worm_20
+    - Last_Worm_1
+    - Last_Worm_2
+    - Last_Worm_3
+    - Last_Worm_4
+    - Last_Worm_5
+    - Last_Worm_6
+    - Last_Worm_7
+    - Last_Worm_8
+    - Last_Worm_9
+    - Last_Worm_10
+    - Last_Worm_11
+    - Last_Worm_12
+    - Last_Worm_13
+    - Last_Worm_14
+    - Last_Worm_15
+    - Last_Worm_16
+    - Last_Worm_17
+    - Last_Worm_18
+    - Last_Worm_19
+    - Last_Worm_20
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 9
+    _initialDelay: 5
+  - _enemyDefinition: {fileID: 11400000, guid: 2626e77d35336cf49b29fdc4d5005417, type: 2}
+    _enemyPrefab: {fileID: 7959222860272486927, guid: e3e3486eaf7068d43abd5e647cc182f8, type: 3}
+    _spawnPointIds:
+    - Monster_1
+    - Monster_2
+    - Monster_3
+    - Monster_4
+    - Monster_5
+    - Monster_6
+    - Monster_7
+    - Monster_8
+    - Monster_9
+    - Monster_10
+    - Monster_11
+    - Monster_12
+    - Monster_13
+    - Monster_14
+    - Monster_15
+    - Monster_16
+    - Monster_17
+    - Monster_18
+    - Monster_19
+    - Monster_20
+    - Monster_21
+    - Monster_22
+    - Monster_23
+    - Monster_24
+    - Monster_25
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 8
+    _initialDelay: 2
+  - _enemyDefinition: {fileID: 11400000, guid: 6a5fd6a71c4fd9d4aa3b5396b1519f68, type: 2}
+    _enemyPrefab: {fileID: 4772325014094560857, guid: 4901e196761efb84fb4dfe87f397172b, type: 3}
+    _spawnPointIds:
+    - Monster_1
+    - Monster_2
+    - Monster_3
+    - Monster_4
+    - Monster_5
+    - Monster_6
+    - Monster_7
+    - Monster_8
+    - Monster_9
+    - Monster_10
+    - Monster_11
+    - Monster_12
+    - Monster_13
+    - Monster_14
+    - Monster_15
+    - Monster_16
+    - Monster_17
+    - Monster_18
+    - Monster_19
+    - Monster_20
+    - Monster_21
+    - Monster_22
+    - Monster_23
+    - Monster_24
+    - Monster_25
+    _spawnPointId: 
+    _count: 5
+    _spawnInterval: 8
+    _initialDelay: 2

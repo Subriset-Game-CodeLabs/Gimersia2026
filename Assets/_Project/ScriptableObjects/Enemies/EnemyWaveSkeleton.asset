@@ -21,6 +21,6 @@ MonoBehaviour:
     - Skeleton_3
     - Skeleton_4
     _spawnPointId: 
-    _count: 9
+    _count: 1
     _spawnInterval: 5
     _initialDelay: 0
