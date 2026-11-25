@@ -16,7 +16,10 @@ public class PhaseManager : MonoBehaviour
     private int _inputBlockedFrame = -1;
     private float _preRewardTimeScale = 1f;
     private bool _rewardPaused;
-    public bool GameplayInputAllowed => (CurrentPhase == PhaseType.Day || CurrentPhase == PhaseType.Night)
+    public GameplayInputGate InputGate { get; } = new GameplayInputGate();
+    public bool GameplayInputAllowed => GameplayPhaseAllowsInput && !InputGate.IsBlocked(Time.frameCount);
+    // Item UI checks the phase without rejecting the input lock it owns itself.
+    public bool GameplayPhaseAllowsInput => (CurrentPhase == PhaseType.Day || CurrentPhase == PhaseType.Night)
         && Time.frameCount > _inputBlockedFrame && (_results == null || _results.Result == RunResult.Playing);
 
     // The int is the day or night number (1 to TotalDays).

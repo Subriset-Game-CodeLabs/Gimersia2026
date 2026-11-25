@@ -91,6 +91,9 @@ public class TreeNode : MonoBehaviour
 
     public void Initialize(TreeDefinition definition)
     {
+        // A reused node must not inherit the previous tree's runtime shield.
+        if (Data != null) Data.ClearItemStatus();
+
         Data = new TreeData(definition);
         Data.OnStageChanged += Refresh;
         Data.OnElementChanged += Refresh;
@@ -110,14 +113,20 @@ public class TreeNode : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (Data != null)
-        {
-            Data.OnStageChanged -= Refresh;
-            Data.OnElementChanged -= Refresh;
-            Data.OnStageUpgraded -= HandleStageUpgraded;
-            Data.OnStageDowngraded -= HandleStageDowngraded;
-            Data.OnDamaged -= HandleDamaged;
-        }
+        if (Data == null) return;
+
+        Data.ClearItemStatus();
+        Data.OnStageChanged -= Refresh;
+        Data.OnElementChanged -= Refresh;
+        Data.OnStageUpgraded -= HandleStageUpgraded;
+        Data.OnStageDowngraded -= HandleStageDowngraded;
+        Data.OnDamaged -= HandleDamaged;
+    }
+
+    private void OnDisable()
+    {
+        // Hiding a tree (block recaptured or tree dead) ends any protection on it.
+        if (Data != null) Data.ClearItemStatus();
     }
 
     private void Refresh()

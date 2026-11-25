@@ -36,6 +36,31 @@ public class TreeData
         Element == ElementType.None ? 0f : Mathf.Max(0f, _nextElementChangeTime - Time.time);
     private float _nextElementChangeTime;
 
+    private float _shieldExpiryTime;
+    public bool IsShielded => _shieldExpiryTime > 0f && IsValidClock(Time.time) && Time.time < _shieldExpiryTime;
+    public float ShieldRemaining => IsShielded ? _shieldExpiryTime - Time.time : 0f;
+
+    public bool TryApplyShield(float duration)
+    {
+        float now = Time.time;
+        if (!IsVulnerableToEnemies || !IsPositiveFinite(duration) || !IsValidClock(now)) return false;
+
+        // Reapply sets a fresh expiry from the same scaled clock; durations never stack.
+        float expiry = now + duration;
+        if (!IsPositiveFinite(expiry) || expiry <= now) return false;
+
+        _shieldExpiryTime = expiry;
+        return true;
+    }
+
+    public void ClearItemStatus()
+    {
+        _shieldExpiryTime = 0f;
+    }
+
+    private static bool IsPositiveFinite(float value) => value > 0f && !float.IsNaN(value) && !float.IsInfinity(value);
+    private static bool IsValidClock(float now) => now >= 0f && !float.IsNaN(now) && !float.IsInfinity(now);
+
     public event Action OnStageChanged;
     public event Action OnElementChanged;
     public event Action OnStageUpgraded;
@@ -127,7 +152,7 @@ public class TreeData
 
     private void TakeDamage(float amount, Vector3 hitDirection, EnemyController attacker)
     {
-        if (!IsVulnerableToEnemies || amount <= 0f) return;
+        if (!IsVulnerableToEnemies || IsShielded || amount <= 0f) return;
 
         if (hitDirection == Vector3.zero && attacker != null)
         {

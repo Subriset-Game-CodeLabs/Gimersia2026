@@ -8,6 +8,38 @@ public enum SpiritState { Idle, Moving, Interacting, Fighting }
 public class SpiritController : MonoBehaviour
 {
     private static readonly List<SpiritController> ActiveSpirits = new List<SpiritController>();
+    public static IReadOnlyList<SpiritController> RegisteredSpirits => ActiveSpirits;
+    private readonly SpiritItemStatus _itemStatus = new SpiritItemStatus();
+    public bool CanReceiveTeamItem => gameObject.activeInHierarchy;
+    public bool CanReceiveTeamHaste => CanReceiveTeamItem;
+    public SpiritItemStatus ItemStatus => _itemStatus;
+
+    public bool TryApplyHaste(float duration, float moveMultiplier, float attackMultiplier)
+    {
+        if (!CanReceiveTeamHaste || !_itemStatus.TryApplyHaste(duration, moveMultiplier, attackMultiplier)) return false;
+        RefreshMovementSpeed();
+        // Keep idle buffed spirits ticking so expiry and GameObject disable are observed.
+        enabled = true;
+        return true;
+    }
+
+    public void ClearItemStatus()
+    {
+        _itemStatus.Clear();
+        RefreshMovementSpeed();
+    }
+
+    public bool TryApplyEmpowerment(float duration, float damageMultiplier)
+    {
+        if (!CanReceiveTeamItem || !_itemStatus.TryApplyEmpowerment(duration, damageMultiplier)) return false;
+        enabled = true;
+        return true;
+    }
+
+    private void RefreshMovementSpeed()
+    {
+        if (_agent != null) _agent.speed = Mathf.Max(0f, _moveSpeed) * _itemStatus.MoveSpeedMultiplier;
+    }
 
     [Header("Movement")]
     [SerializeField] private float _moveSpeed = 4f;
@@ -18,6 +50,9 @@ public class SpiritController : MonoBehaviour
 
     [Header("Combat & Projectile")]
     [SerializeField] private SpiritCombatSettings _combatSettings;
+    [Tooltip("Temporary damage snapshot diagnostics, at most once per scaled second per spirit. Disable after testing.")]
+    [SerializeField] private bool _logItemDamageSnapshots;
+    private float _nextItemDamageLogTime;
     [Tooltip("Multiplier damage tambahan ketika Special Attack terpilih.")]
     [SerializeField, Min(1f)] private float _specialAttackDamageMultiplier = 1.6f;
     [Tooltip("Skala ukuran prefab projectile 3D sphere saat Special Attack.")]
@@ -30,7 +65,11 @@ public class SpiritController : MonoBehaviour
     private SpiritView _view;
     private SpiritAnimator _animator;
     private StageBuffState _buffs;
-    public void InitializeBuffs(StageBuffState buffs) { _buffs = buffs; }
+    public void InitializeBuffs(StageBuffState buffs)
+    {
+        ClearItemStatus();
+        _buffs = buffs;
+    }
 
     private readonly Vector3[] _pathCorners = new Vector3[128];
     private bool _hasMovePath;
@@ -90,12 +129,15 @@ public class SpiritController : MonoBehaviour
 
     private void OnDestroy()
     {
+        ClearItemStatus();
         ActiveSpirits.Remove(this);
         Stop();
     }
 
     private void OnDisable()
     {
+        // Component disable is also our normal idle optimization, not despawning.
+        if (!gameObject.activeInHierarchy) ClearItemStatus();
         Stop();
     }
 
@@ -268,7 +310,7 @@ public class SpiritController : MonoBehaviour
             return true;
         }
 
-        _agent.speed = Mathf.Max(0f, _moveSpeed);
+        RefreshMovementSpeed();
         _agent.stoppingDistance = ArrivalDistance;
         _agent.autoRepath = false;
         if (!_agent.SetPath(_path)) return false;
@@ -304,6 +346,8 @@ public class SpiritController : MonoBehaviour
 
     private void Update()
     {
+        RefreshMovementSpeed();
+        if (State == SpiritState.Idle && !_itemStatus.IsActive) enabled = false;
         if (Time.timeScale <= 0f) return;
         if (_hasPendingShot && (_animator == null || !_animator.IsAttackInProgress))
         {
@@ -728,6 +772,7 @@ public class SpiritController : MonoBehaviour
         }
 
         attackSpeed *= 1f + (_buffs != null ? _buffs.GetTotal(BuffType.SpiritAttackSpeed) : 0f);
+        attackSpeed *= _itemStatus.AttackSpeedMultiplier;
         TeamworkSettings teamwork = _combatSettings.TeamworkSettings;
         if (teamwork != null)
         {
@@ -746,6 +791,14 @@ public class SpiritController : MonoBehaviour
             damage *= _specialAttackDamageMultiplier;
         }
 
+        // Snapshot the fully calculated damage, including special attacks, once per swing.
+        float itemDamageMultiplier = _itemStatus.DamageMultiplier;
+        if (_logItemDamageSnapshots && Time.time >= _nextItemDamageLogTime)
+        {
+            _nextItemDamageLogTime = Time.time + 1f;
+            Debug.Log($"Item damage snapshot: current={damage}, empowerment x{itemDamageMultiplier}, final={damage * itemDamageMultiplier}, special={isSpecialAttack}", this);
+        }
+        damage *= itemDamageMultiplier;
         _pendingEnemy = _enemy;
         _pendingDamage = damage;
         _pendingProjectileScale = isSpecialAttack ? _specialProjectileScale : 1f;
@@ -814,6 +867,6 @@ public class SpiritController : MonoBehaviour
         SetTarget(null);
         ClearEnemyTarget();
         SetState(SpiritState.Idle);
-        enabled = false;
+        enabled = gameObject.activeInHierarchy && _itemStatus.IsActive;
     }
 }

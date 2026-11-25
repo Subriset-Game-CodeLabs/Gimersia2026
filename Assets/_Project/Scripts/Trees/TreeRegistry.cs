@@ -9,6 +9,7 @@ public class TreeRegistry : MonoBehaviour
     [SerializeField] private ElementSettings _elementSettings;
 
     private readonly List<TreeNode> _trees = new List<TreeNode>();
+    public IReadOnlyList<TreeNode> Trees => _trees;
     public ElementSettings Settings => _elementSettings;
 
     public event Action<TreeNode> OnTreeDied;

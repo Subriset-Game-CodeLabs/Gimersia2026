@@ -19,6 +19,9 @@ public class LevelSelection : MonoBehaviour
         public Sprite PreviewSprite;
         public string[] Tags = { "7 Malam", "± 17 Menit", "5 Grid", "3 Spirit" };
         public string SceneName = SceneFlow.GameplayScene;
+        public string Id;
+        // TODO(balance): configure a fixed reward per stage; zero until designed.
+        [Min(0)] public int WinCoins;
         public bool Unlocked = true;
     }
 
@@ -92,6 +95,10 @@ public class LevelSelection : MonoBehaviour
     {
         if (_levels == null || _levels.Length == 0) return;
         for (int i = 0; i < _levels.Length; i++)
+            if (_levels[i] != null && _levels[i].Unlocked && ShopRuntime.SelectedStage != null
+                && _levels[i].Id == ShopRuntime.SelectedStage.Id)
+            { SelectLevel(i); return; }
+        for (int i = 0; i < _levels.Length; i++)
         {
             if (_levels[i].Unlocked)
             {
@@ -142,9 +149,15 @@ public class LevelSelection : MonoBehaviour
 
     private void StartSelectedLevel()
     {
+        if (SceneFlow.IsLoading) return;
         if (_levels == null || _selectedIndex < 0 || _selectedIndex >= _levels.Length) return;
         LevelEntry entry = _levels[_selectedIndex];
         if (!entry.Unlocked || string.IsNullOrEmpty(entry.SceneName)) return;
-        SceneFlow.Load(entry.SceneName);
+        for (int i = 0; i < _levels.Length; i++)
+            if (i != _selectedIndex && _levels[i] != null && _levels[i].Id == entry.Id)
+            { Debug.LogError("Level IDs must be unique and stable.", this); return; }
+        if (!ShopRuntime.TrySelectStage(entry.Id, entry.SceneName, entry.WinCoins, out string error))
+        { Debug.LogError(error, this); return; }
+        SceneFlow.Load(SceneFlow.PreparationShopScene);
     }
 }

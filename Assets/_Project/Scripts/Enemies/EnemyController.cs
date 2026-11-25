@@ -81,6 +81,8 @@ public class EnemyController : MonoBehaviour
     public EnemyState State { get; private set; } = EnemyState.Idle;
     public float Hp { get; private set; }
     public bool IsAlive => Hp > 0f && !_deathStarted;
+    public bool IsFrozen => _itemStatus.IsFrozen(Time.time);
+    public float FreezeRemaining => _itemStatus.GetFreezeRemaining(Time.time);
     public bool IsHiddenUnderwater => _isHiddenUnderwater;
     public bool IsTargetableBySpirit => IsAlive && !_isHiddenUnderwater;
     public bool IsWorm => Definition != null && Definition.MovementArchetype == EnemyMovementArchetype.AquaticAmbushRanged;
@@ -122,6 +124,11 @@ public class EnemyController : MonoBehaviour
     private readonly List<Transform> _spawnPoints = new List<Transform>();
     private readonly List<Transform> _directionPoints = new List<Transform>();
     private readonly List<Transform> _lastPoints = new List<Transform>();
+    private readonly EnemyItemStatus _itemStatus = new EnemyItemStatus();
+    private bool _freezePresentationActive;
+    private float _animatorSpeedBeforeFreeze = 1f;
+    private bool _freezeStoppedAgent;
+    private bool _agentWasStopped;
 
     private NavMeshAgent _agent;
     private NavMeshPath _path;
@@ -198,6 +205,7 @@ public class EnemyController : MonoBehaviour
     {
         if (this == null || _deathNotified) return;
 
+        ClearItemStatus();
         DisableAgent();
         Definition = definition;
         Hp = definition != null ? Mathf.Max(0f, definition.MaxHp) : 0f;
@@ -338,6 +346,64 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    public bool TryFreeze(float duration)
+    {
+        if (!isActiveAndEnabled || !IsTargetableBySpirit) return false;
+        if (!_itemStatus.TryFreeze(duration, Time.time)) return false;
+
+        PauseForFreeze();
+        return true;
+    }
+
+    private bool UpdateItemFreeze()
+    {
+        if (IsFrozen)
+        {
+            PauseForFreeze();
+            return true;
+        }
+
+        RestoreAfterFreeze();
+        return false;
+    }
+
+    private void PauseForFreeze()
+    {
+        // A refresh must not replace the original animator speed with zero.
+        if (!_freezePresentationActive)
+        {
+            _animatorSpeedBeforeFreeze = _animator != null ? _animator.speed : 1f;
+            _freezePresentationActive = true;
+        }
+        if (_animator != null) _animator.speed = 0f;
+
+        if (_agent == null || !_agent.isActiveAndEnabled || !_agent.isOnNavMesh) return;
+        if (!_freezeStoppedAgent)
+        {
+            _agentWasStopped = _agent.isStopped;
+            _freezeStoppedAgent = true;
+        }
+        _agent.isStopped = true;
+    }
+
+    private void RestoreAfterFreeze()
+    {
+        if (!_freezePresentationActive) return;
+
+        if (_animator != null) _animator.speed = _animatorSpeedBeforeFreeze;
+        if (_freezeStoppedAgent && _agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh)
+            _agent.isStopped = _agentWasStopped;
+
+        _freezePresentationActive = false;
+        _freezeStoppedAgent = false;
+    }
+
+    private void ClearItemStatus()
+    {
+        _itemStatus.Clear();
+        RestoreAfterFreeze();
+    }
+
     public void TakeDamage(float amount)
     {
         TakeDamage(amount, transform.position - transform.forward);
@@ -368,6 +434,7 @@ public class EnemyController : MonoBehaviour
 
     private void BeginDeathSequence()
     {
+        ClearItemStatus();
         _deathStarted = true;
         _isHovered = false;
         _isHiddenUnderwater = false;
@@ -404,6 +471,7 @@ public class EnemyController : MonoBehaviour
 
     private void OnDisable()
     {
+        ClearItemStatus();
         ActiveEnemies.Remove(this);
         SetTargetTree(null);
         _attackers.Clear();
@@ -431,6 +499,7 @@ public class EnemyController : MonoBehaviour
         }
 
         if (!IsAlive) return;
+        if (UpdateItemFreeze()) return;
 
         _attackCooldown = Mathf.Max(0f, _attackCooldown - Time.deltaTime);
 
@@ -955,7 +1024,7 @@ public class EnemyController : MonoBehaviour
     // =========================================================================
     private void PerformMeleeOrRangedAttack()
     {
-        if (_attackCooldown > 0f || _target == null || !_target.IsEnemyTargetable) return;
+        if (IsFrozen || _attackCooldown > 0f || _target == null || !_target.IsEnemyTargetable) return;
 
         _attackCooldown = Mathf.Max(0.05f, Definition.AttackInterval);
 

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1054480715464267231}
   - component: {fileID: 2974262337133846805}
   - component: {fileID: 7680622048205840110}
+  - component: {fileID: 2057383396598516393}
   m_Layer: 6
   m_Name: Tile_Center
   m_TagString: Untagged
@@ -105,7 +106,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 15f163b8ecd7ca74885c1b2c0f0924f8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IslandTile
   _clickCollider: {fileID: 2684678581194016744}
   _highlightRenderer: {fileID: 2974262337133846805}
@@ -113,14 +114,23 @@ MonoBehaviour:
   _treeDefinition: {fileID: 0}
   _treePoint: {fileID: 7100000000000000003}
   _interactionPoint: {fileID: 7100000000000000004}
-  _highlightAmount: 0.35
---- !u!65 &2684678581194016744
-BoxCollider:
+  _visualTransform: {fileID: 0}
+  _hoverLiftHeight: 0.12
+  _hoverSmoothSpeed: 18
+  _clickDipDepth: 0.055
+  _clickDipDuration: 0.22
+  _moveHoverTint: {r: 0.88, g: 1.18, b: 0.9, a: 1}
+  _moveHoverRim: {r: 0.35, g: 1.05, b: 0.45, a: 0.85}
+  _treeHoverTint: {r: 1.2, g: 1.05, b: 0.78, a: 1}
+  _treeHoverRim: {r: 1.15, g: 0.85, b: 0.22, a: 0.9}
+  _clickConfirmRim: {r: 1.35, g: 1.35, b: 0.75, a: 1}
+--- !u!64 &2057383396598516393
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7200000000000000001}
+  m_GameObject: {fileID: 3622670526511579328}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -129,12 +139,13 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 0.1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -2385820668052547965, guid: 0a8a49a1980943a4a9919b8f64a7c75e, type: 3}
 --- !u!1 &7200000000000000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -167,6 +178,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4111116904279595642}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2684678581194016744
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7200000000000000001}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 0.1, z: 2}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &7200000000000000002
 GameObject:
   m_ObjectHideFlags: 0

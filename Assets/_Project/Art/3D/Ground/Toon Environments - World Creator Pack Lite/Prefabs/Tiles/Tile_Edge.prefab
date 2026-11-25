@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1487755865394108590}
   - component: {fileID: 3693344608105868388}
   - component: {fileID: 7680622048205840110}
+  - component: {fileID: 158490941007298347}
   m_Layer: 6
   m_Name: Tile_Edge
   m_TagString: Untagged
@@ -113,7 +114,38 @@ MonoBehaviour:
   _treeDefinition: {fileID: 0}
   _treePoint: {fileID: 7100000000000000003}
   _interactionPoint: {fileID: 7100000000000000004}
-  _highlightAmount: 0.35
+  _visualTransform: {fileID: 0}
+  _hoverLiftHeight: 0.12
+  _hoverSmoothSpeed: 18
+  _clickDipDepth: 0.055
+  _clickDipDuration: 0.22
+  _moveHoverTint: {r: 0.88, g: 1.18, b: 0.9, a: 1}
+  _moveHoverRim: {r: 0.35, g: 1.05, b: 0.45, a: 0.85}
+  _treeHoverTint: {r: 1.2, g: 1.05, b: 0.78, a: 1}
+  _treeHoverRim: {r: 1.15, g: 0.85, b: 0.22, a: 0.9}
+  _clickConfirmRim: {r: 1.35, g: 1.35, b: 0.75, a: 1}
+--- !u!64 &158490941007298347
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2900768042314010033}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -942445950811305749, guid: 06922b963b921e44cbadd739dab73ab0, type: 3}
 --- !u!1 &7200000000000000001
 GameObject:
   m_ObjectHideFlags: 0

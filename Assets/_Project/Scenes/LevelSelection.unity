@@ -7721,6 +7721,8 @@ MonoBehaviour:
     - 5 Grid
     - 3 Spirit
     SceneName: Hakim_playground
+    Id: stage_01
+    WinCoins: 300
     Unlocked: 1
   - BannerLabel: LEVEL 2
     LevelTitle: MAP 2 (TERKUNCI)
@@ -7729,6 +7731,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 3
     LevelTitle: MAP 3 (TERKUNCI)
@@ -7737,6 +7741,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 4
     LevelTitle: MAP 4 (TERKUNCI)
@@ -7745,6 +7751,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 5
     LevelTitle: MAP 5 (TERKUNCI)
@@ -7753,6 +7761,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 6
     LevelTitle: MAP 6 (TERKUNCI)
@@ -7761,6 +7771,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 7
     LevelTitle: MAP 7 (TERKUNCI)
@@ -7769,6 +7781,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 8
     LevelTitle: MAP 8 (TERKUNCI)
@@ -7777,6 +7791,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 9
     LevelTitle: MAP 9 (TERKUNCI)
@@ -7785,6 +7801,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 10
     LevelTitle: MAP 10 (TERKUNCI)
@@ -7793,6 +7811,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 11
     LevelTitle: MAP 11 (TERKUNCI)
@@ -7801,6 +7821,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 12
     LevelTitle: MAP 12 (TERKUNCI)
@@ -7809,6 +7831,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
 --- !u!114 &1465582669
 MonoBehaviour:

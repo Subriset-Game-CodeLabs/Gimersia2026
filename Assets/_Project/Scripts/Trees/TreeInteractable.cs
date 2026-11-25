@@ -65,6 +65,25 @@ public class TreeInteractable : MonoBehaviour, IInteractable
         !_node.Data.IsFullyGrown &&
         !_awaitingNewCommand;
 
+    public bool CanGrowInstantly =>
+        isActiveAndEnabled &&
+        _node != null &&
+        _node.isActiveAndEnabled &&
+        _node.IsTargetable &&
+        !_node.Data.IsFullyGrown;
+
+    public bool TryGrowInstantly()
+    {
+        if (!isActiveAndEnabled || !CanGrowInstantly) return false;
+
+        // Clear the work session before stage events notify spirits and visuals.
+        _progress = 0f;
+        _awaitingNewCommand = false;
+        _node.SetGrowthVfxActive(false);
+        _node.Data.SetStage(TreeStage.Complete);
+        return true;
+    }
+
     /// <summary>
     /// Dipanggil saat pemain mengklik pohon untuk memulai sesi pertumbuhan fase berikutnya.
     /// </summary>
