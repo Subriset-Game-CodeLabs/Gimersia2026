@@ -18,9 +18,11 @@ public class MainMenu : MonoBehaviour
 
     [Header("Settings pop-up")]
     [SerializeField] private GameObject _settingsPopup;
-    [SerializeField] private Slider _musicSlider;
-    [SerializeField] private Slider _sfxSlider;
-    [SerializeField] private Button _settingsCloseButton;
+    // Preserve existing scenes and MenuFlowBuilder output while reusing the shared component.
+    [SerializeField, HideInInspector] private Slider _musicSlider;
+    [SerializeField, HideInInspector] private Slider _sfxSlider;
+    [SerializeField, HideInInspector] private Button _settingsCloseButton;
+    private AudioSettingsPanel _audioSettings;
 
     [Header("Credit pop-up")]
     [SerializeField] private GameObject _creditPopup;
@@ -35,21 +37,19 @@ public class MainMenu : MonoBehaviour
         if (!TryGetComponent(out _focusNavigator))
             _focusNavigator = gameObject.AddComponent<UIFocusOnNavigate>();
 
+        _audioSettings = AudioSettingsPanel.Resolve(_settingsPopup, _musicSlider, _sfxSlider, _settingsCloseButton);
+        if (_audioSettings != null) _audioSettings.OnCloseRequested += ClosePopup;
         _startButton.onClick.AddListener(StartGame);
         _settingsButton.onClick.AddListener(OpenSettings);
         _creditButton.onClick.AddListener(OpenCredit);
         _exitButton.onClick.AddListener(SceneFlow.Quit);
-        _settingsCloseButton.onClick.AddListener(ClosePopup);
         _creditCloseButton.onClick.AddListener(ClosePopup);
-        _musicSlider.onValueChanged.AddListener(SetMusicVolume);
-        _sfxSlider.onValueChanged.AddListener(SetSfxVolume);
 
         // Pasang SFX hover & klik otomatis ke seluruh tombol Main Menu
         UIButtonAudio.Attach(_startButton, UIButtonAudio.ClickSoundType.StartGame);
         UIButtonAudio.Attach(_settingsButton, UIButtonAudio.ClickSoundType.StandardClick);
         UIButtonAudio.Attach(_creditButton, UIButtonAudio.ClickSoundType.StandardClick);
         UIButtonAudio.Attach(_exitButton, UIButtonAudio.ClickSoundType.StandardClick);
-        UIButtonAudio.Attach(_settingsCloseButton, UIButtonAudio.ClickSoundType.None);
         UIButtonAudio.Attach(_creditCloseButton, UIButtonAudio.ClickSoundType.None);
 
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -74,10 +74,8 @@ public class MainMenu : MonoBehaviour
         _settingsButton.onClick.RemoveListener(OpenSettings);
         _creditButton.onClick.RemoveListener(OpenCredit);
         _exitButton.onClick.RemoveListener(SceneFlow.Quit);
-        _settingsCloseButton.onClick.RemoveListener(ClosePopup);
+        if (_audioSettings != null) _audioSettings.OnCloseRequested -= ClosePopup;
         _creditCloseButton.onClick.RemoveListener(ClosePopup);
-        _musicSlider.onValueChanged.RemoveListener(SetMusicVolume);
-        _sfxSlider.onValueChanged.RemoveListener(SetSfxVolume);
     }
 
     private void Update()
@@ -92,12 +90,17 @@ public class MainMenu : MonoBehaviour
 
     private void OpenSettings()
     {
-        // Show saved values without writing them back.
-        _musicSlider.SetValueWithoutNotify(GameAudioSettings.MusicVolume);
-        _sfxSlider.SetValueWithoutNotify(GameAudioSettings.SfxVolume);
-        OpenPopup(_settingsPopup, _musicSlider, _settingsButton);
-        if (_musicSlider.TryGetComponent(out UIStateSlider musicVisual)) musicVisual.Refresh();
-        if (_sfxSlider.TryGetComponent(out UIStateSlider sfxVisual)) sfxVisual.Refresh();
+        if (_audioSettings == null)
+        {
+            Debug.LogError("MainMenu: add AudioSettingsPanel to the settings pop-up and assign its controls.", this);
+            return;
+        }
+        if (!_audioSettings.TryValidate(out string error))
+        {
+            Debug.LogError("MainMenu: " + error, this);
+            return;
+        }
+        OpenPopup(_settingsPopup, _audioSettings.FirstControl, _settingsButton);
     }
 
     private void OpenCredit() => OpenPopup(_creditPopup, _creditCloseButton, _creditButton);
@@ -117,7 +120,6 @@ public class MainMenu : MonoBehaviour
     private void ClosePopup()
     {
         if (_openPopup == null) return;
-        if (_openPopup == _settingsPopup) GameAudioSettings.Save();
         AudioManager.Instance.PlayUiPopupClose();
         _openPopup.SetActive(false);
         _openPopup = null;
@@ -126,14 +128,4 @@ public class MainMenu : MonoBehaviour
             clearCurrentSelection: true);
     }
 
-    private static void SetMusicVolume(float value)
-    {
-        GameAudioSettings.MusicVolume = value;
-    }
-
-    private static void SetSfxVolume(float value)
-    {
-        GameAudioSettings.SfxVolume = value;
-        AudioManager.Instance.PlayUiSliderTick();
-    }
 }

@@ -234,6 +234,8 @@ public class TreeElementTurret : MonoBehaviour
 
     private void Update()
     {
+        // A ready volley must not fire just because its cooldown was already zero.
+        if (Time.timeScale <= 0f) return;
         if (!_isCombatActive) return;
 
         if (_treeNode == null || _treeNode.Data == null || !_treeNode.IsTargetable || !_treeNode.Data.HasElement)

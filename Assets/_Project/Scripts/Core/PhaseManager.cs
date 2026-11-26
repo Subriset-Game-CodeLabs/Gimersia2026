@@ -11,6 +11,8 @@ public class PhaseManager : MonoBehaviour
     public NightRewardController Rewards => _rewards;
     public StageBuffState Buffs => _rewards != null ? _rewards.State : null;
     public event Action<int> OnRewardStart;
+    // Release manual pause before the reward transaction snapshots the gameplay clock.
+    public event Action OnBeforeRewardStart;
     private int _inputBlockedFrame = -1;
     private float _preRewardTimeScale = 1f;
     private bool _rewardPaused;
@@ -123,6 +125,8 @@ public class PhaseManager : MonoBehaviour
         }
         else
         {
+            OnBeforeRewardStart?.Invoke();
+            if (CurrentPhase != PhaseType.Night || _results == null || _results.Result != RunResult.Playing) return;
             CurrentPhase = PhaseType.RewardSelection;
             TimeRemaining = PhaseDuration = 0f;
             _inputBlockedFrame = Time.frameCount;
