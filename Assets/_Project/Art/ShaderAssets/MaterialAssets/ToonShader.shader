@@ -10,6 +10,9 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
         _ShadowThreshold ("Shadow Threshold", Range(-1.0, 1.0)) = 0.0
         _ShadowSmoothness ("Shadow Smoothness", Range(0.001, 0.5)) = 0.02
 
+        [Header(Additional Lights (Point Lights))]
+        _AdditionalLightIntensity ("Point Light Intensity", Range(0.0, 3.0)) = 1.15
+
         [Header(Vertical Gradient Fake AO)]
         _GradientBottomColor ("Bottom AO Tint", Color) = (0.55, 0.6, 0.75, 1)
         _GradientMinY ("Gradient Bottom Y (Local)", Float) = 0.0
@@ -76,6 +79,7 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             half4 _ShadowColor;
             float _ShadowThreshold;
             float _ShadowSmoothness;
+            float _AdditionalLightIntensity;
             half4 _GradientBottomColor;
             float _GradientMinY;
             float _GradientMaxY;
@@ -180,7 +184,7 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
         };
         ENDHLSL
        
-        // Pass 1: Main Toon + Fake AO + Rim Light + Spirit Cutout (URP Forward)
+        // Pass 1: Main Toon + Additional Point Lights + Fake AO + Rim Light + Spirit Cutout
         Pass
         {
             Name "UniversalForward"
@@ -195,6 +199,9 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _FORWARD_PLUS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
 
             Varyings vert(Attributes input)
             {
@@ -232,7 +239,36 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
                 half3 shadowCol = colWithAO * _ShadowColor.rgb;
                 half3 finalCol = lerp(shadowCol, litCol, celIntensity);
 
-                // 4. Rim Light (Aktif jika Alpha pada Rim Color > 0)
+                // 4. Additional Lights (Point Light dari Pohon Elemen & Spirit)
+                #if defined(_ADDITIONAL_LIGHTS) || defined(_FORWARD_PLUS)
+                    half3 additionalLightsCol = half3(0.0, 0.0, 0.0);
+
+                    #if defined(LIGHT_LOOP_BEGIN)
+                        InputData inputData = (InputData)0;
+                        inputData.positionWS = input.positionWS;
+                        inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                        uint pixelLightCount = GetAdditionalLightsCount();
+                        LIGHT_LOOP_BEGIN(pixelLightCount)
+                            Light light = GetAdditionalLight(lightIndex, input.positionWS);
+                            float addNdotL = saturate(dot(normal, light.direction));
+                            float softFalloff = smoothstep(0.0, 0.15, light.distanceAttenuation) * light.distanceAttenuation;
+                            additionalLightsCol += light.color * (softFalloff * lerp(0.55, 1.0, addNdotL));
+                        LIGHT_LOOP_END
+                    #else
+                        uint pixelLightCount = GetAdditionalLightsCount();
+                        for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
+                        {
+                            Light light = GetAdditionalLight(lightIndex, input.positionWS);
+                            float addNdotL = saturate(dot(normal, light.direction));
+                            float softFalloff = smoothstep(0.0, 0.15, light.distanceAttenuation) * light.distanceAttenuation;
+                            additionalLightsCol += light.color * (softFalloff * lerp(0.55, 1.0, addNdotL));
+                        }
+                    #endif
+
+                    finalCol += colWithAO * additionalLightsCol * _AdditionalLightIntensity;
+                #endif
+
+                // 5. Rim Light (Aktif jika Alpha pada Rim Color > 0)
                 float3 viewDir = normalize(GetWorldSpaceViewDir(input.positionWS));
                 float rim = 1.0 - saturate(dot(viewDir, normal));
                 float rimFactor = pow(rim, _RimPower) * _RimColor.a;

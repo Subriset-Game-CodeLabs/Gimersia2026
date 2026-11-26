@@ -3960,6 +3960,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &479845877
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 479845879}
+  - component: {fileID: 479845878}
+  m_Layer: 0
+  m_Name: DayPostProcessVolume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &479845878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 479845877}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: 7a5b9d7901149034f8a7dc1a8bc8c153, type: 2}
+--- !u!4 &479845879
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 479845877}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12.51486, y: -13.999405, z: 3.6195488}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &483249836
 GameObject:
   m_ObjectHideFlags: 0
@@ -4167,8 +4216,8 @@ Light:
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
+    m_Bias: 0.03
+    m_NormalBias: 0.25
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
       e00: 1
@@ -4238,7 +4287,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
-  m_UsePipelineSettings: 1
+  m_UsePipelineSettings: 0
   m_AdditionalLightsShadowResolutionTier: 2
   m_CustomShadowLayers: 0
   m_LightCookieSize: {x: 1, y: 1}
@@ -8546,6 +8595,55 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1202690312}
   m_CullTransparentMesh: 1
+--- !u!1 &1212068054
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1212068056}
+  - component: {fileID: 1212068055}
+  m_Layer: 0
+  m_Name: NightPostProcessVolume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1212068055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1212068054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 1
+  blendDistance: 0
+  weight: 0
+  sharedProfile: {fileID: 11400000, guid: e790222cfa2333742a14ea022b3bbf95, type: 2}
+--- !u!4 &1212068056
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1212068054}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12.51486, y: -13.999405, z: 3.6195488}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1229297298
 GameObject:
   m_ObjectHideFlags: 0
@@ -13718,6 +13816,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1846889296}
   - component: {fileID: 1846889295}
+  - component: {fileID: 1846889297}
+  - component: {fileID: 1846889298}
   m_Layer: 0
   m_Name: DayNightLighting
   m_TagString: Untagged
@@ -13755,6 +13855,85 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1846889297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1846889294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbd86e07a35e40a42add292583602577, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NightSeaAtmosphereController
+  _seaRenderer: {fileID: 289145800}
+  _waterColorProperties:
+  - propertyName: _DepthGradientShallow
+    dayColor: {r: 0.3254902, g: 0.80784315, b: 0.96862745, a: 0.8509804}
+    nightColor: {r: 0.09019608, g: 0.23921569, b: 0.4509804, a: 0.9019608}
+    propertyId: 0
+    fromColor: {r: 0, g: 0, b: 0, a: 0}
+    isValid: 0
+  - propertyName: _DepthGradientDeep
+    dayColor: {r: 0.08627451, g: 0.40784314, b: 1, a: 0.9490196}
+    nightColor: {r: 0.03137255, g: 0.09803922, b: 0.2784314, a: 0.98039216}
+    propertyId: 0
+    fromColor: {r: 0, g: 0, b: 0, a: 0}
+    isValid: 0
+  - propertyName: _VignetteColor
+    dayColor: {r: 0.03137255, g: 0.16078432, b: 0.54901963, a: 0.6509804}
+    nightColor: {r: 0.011764706, g: 0.039215688, b: 0.14117648, a: 0.8509804}
+    propertyId: 0
+    fromColor: {r: 0, g: 0, b: 0, a: 0}
+    isValid: 0
+  - propertyName: _FoamColor
+    dayColor: {r: 1, g: 1, b: 1, a: 1}
+    nightColor: {r: 0.38039216, g: 0.56078434, b: 0.81960785, a: 0.64705884}
+    propertyId: 0
+    fromColor: {r: 0, g: 0, b: 0, a: 0}
+    isValid: 0
+  - propertyName: _SparkleColor
+    dayColor: {r: 1, g: 1, b: 0.9490196, a: 1}
+    nightColor: {r: 0.2509804, g: 0.41960785, b: 0.72156864, a: 0.33333334}
+    propertyId: 0
+    fromColor: {r: 0, g: 0, b: 0, a: 0}
+    isValid: 0
+  - propertyName: _RippleColor
+    dayColor: {r: 0.8509804, g: 0.9607843, b: 1, a: 0.6509804}
+    nightColor: {r: 0.3019608, g: 0.47843137, b: 0.7490196, a: 0.3529412}
+    propertyId: 0
+    fromColor: {r: 0, g: 0, b: 0, a: 0}
+    isValid: 0
+  - propertyName: _VoronoiColor
+    dayColor: {r: 0.8509804, g: 0.9607843, b: 1, a: 0.3529412}
+    nightColor: {r: 0.3019608, g: 0.47843137, b: 0.7490196, a: 0.21568628}
+    propertyId: 0
+    fromColor: {r: 0, g: 0, b: 0, a: 0}
+    isValid: 0
+  _seaMistParticles: {fileID: 0}
+  _dayMistColor: {r: 0.75, g: 0.88, b: 1, a: 0.02}
+  _nightMistColor: {r: 0.45, g: 0.62, b: 0.92, a: 0.14}
+  _dayMistEmissionRate: 2
+  _nightMistEmissionRate: 14
+  _transitionDuration: 2.2
+--- !u!114 &1846889298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1846889294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5e2cc617e6b8c545974f13eb907052a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NightPostProcessAndFirefliesController
+  _nightVolume: {fileID: 1212068055}
+  _firefliesParticles: {fileID: 0}
+  _dayEmissionRate: 0
+  _nightEmissionRate: 14
+  _transitionDuration: 2.2
 --- !u!1 &1857329198
 GameObject:
   m_ObjectHideFlags: 0
@@ -15334,7 +15513,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -17236,3 +17415,5 @@ SceneRoots:
   - {fileID: 377414318}
   - {fileID: 620426226}
   - {fileID: 740413797}
+  - {fileID: 479845879}
+  - {fileID: 1212068056}

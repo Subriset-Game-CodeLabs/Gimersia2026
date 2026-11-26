@@ -16,6 +16,18 @@ public class TreeNode : MonoBehaviour
     [SerializeField] private GameObject _waterTreeVisual;
     [SerializeField] private GameObject _lightningTreeVisual;
 
+    [Header("Elemental Pool of Light (Pencahayaan Malam & Siang)")]
+    [Tooltip("Opsional: Point Light anak pada prefab pohon. Otomatis dibuat jika dikosongkan.")]
+    [SerializeField] private Light _elementPointLight;
+    [SerializeField] private float _lightHeightOffset = 1.65f;
+    [SerializeField, Min(0.5f)] private float _elementLightRange = 4.8f;
+    [SerializeField, Min(0f)] private float _nightLightIntensity = 2.6f;
+    [SerializeField, Min(0f)] private float _dayLightIntensity = 0.25f;
+    [SerializeField, Min(0.05f)] private float _lightFadeDuration = 1.8f;
+    [SerializeField] private Color _fireLightColor = new Color(1f, 0.48f, 0.16f, 1f);
+    [SerializeField] private Color _waterLightColor = new Color(0.22f, 0.85f, 1f, 1f);
+    [SerializeField] private Color _lightningLightColor = new Color(1f, 0.84f, 0.24f, 1f);
+
     [Header("UI Position per Stage & Element (Bar HP & Progression)")]
     [Tooltip("Otomatis terisi TreeWorldCanvas jika dikosongkan.")]
     [SerializeField] private Transform _worldUiRoot;
@@ -54,6 +66,14 @@ public class TreeNode : MonoBehaviour
     [SerializeField] private TreeVisualFeedback _visualFeedback;
     private TreeUnderAttackIndicator _underAttackIndicator;
 
+    private PhaseManager _phases;
+    private bool _isNight;
+    private float _currentLightIntensity;
+    private float _targetLightIntensity;
+    private Color _currentLightColor = Color.white;
+    private Color _targetLightColor = Color.white;
+    private float _lightPulseSeed;
+
     public TreeData Data { get; private set; }
     public event Action<TreeNode> OnAvailabilityChanged;
 
@@ -83,8 +103,23 @@ public class TreeNode : MonoBehaviour
         if (_underAttackIndicator == null)
             _underAttackIndicator = gameObject.AddComponent<TreeUnderAttackIndicator>();
 
+        _lightPulseSeed = Mathf.Abs(GetInstanceID() * 0.173f);
+        EnsureElementLight();
+
         SetGrowthVfxActive(false);
         SetElementChangeVfxActive(false);
+    }
+
+    private void OnEnable()
+    {
+        BindPhaseEvents();
+        UpdateElementLightTarget(instant: true);
+    }
+
+    private void OnDisable()
+    {
+        UnbindPhaseEvents();
+        if (Data != null) Data.ClearItemStatus();
     }
 
     public void SetInteractionPoint(Transform point) => _interactionPoint = point;
@@ -112,6 +147,7 @@ public class TreeNode : MonoBehaviour
 
     private void OnDestroy()
     {
+        UnbindPhaseEvents();
         if (Data == null) return;
 
         Data.ClearItemStatus();
@@ -122,9 +158,141 @@ public class TreeNode : MonoBehaviour
         Data.OnDamaged -= HandleDamaged;
     }
 
-    private void OnDisable()
+    private void BindPhaseEvents()
     {
-        if (Data != null) Data.ClearItemStatus();
+        PhaseManager current = PhaseManager.Instance;
+        if (_phases == current)
+        {
+            if (_phases != null)
+                _isNight = _phases.CurrentPhase == PhaseType.Night;
+            return;
+        }
+
+        UnbindPhaseEvents();
+        _phases = current;
+        if (_phases != null)
+        {
+            _isNight = _phases.CurrentPhase == PhaseType.Night;
+            _phases.OnDayStart += HandleDayStart;
+            _phases.OnNightStart += HandleNightStart;
+        }
+    }
+
+    private void UnbindPhaseEvents()
+    {
+        if (_phases == null) return;
+        _phases.OnDayStart -= HandleDayStart;
+        _phases.OnNightStart -= HandleNightStart;
+        _phases = null;
+    }
+
+    private void HandleDayStart(int day)
+    {
+        _isNight = false;
+        UpdateElementLightTarget(instant: false);
+    }
+
+    private void HandleNightStart(int night)
+    {
+        _isNight = true;
+        UpdateElementLightTarget(instant: false);
+    }
+
+    private void Update()
+    {
+        if (_elementPointLight == null) return;
+        if (!_elementPointLight.enabled && _targetLightIntensity <= 0.001f) return;
+
+        float step = (_lightFadeDuration > 0.01f)
+            ? (Mathf.Max(_nightLightIntensity, _dayLightIntensity) / _lightFadeDuration) * Time.deltaTime
+            : 100f;
+
+        _currentLightIntensity = Mathf.MoveTowards(_currentLightIntensity, _targetLightIntensity, step);
+        _currentLightColor = Color.Lerp(_currentLightColor, _targetLightColor, 8f * Time.deltaTime);
+
+        if (_currentLightIntensity <= 0.001f && _targetLightIntensity <= 0.001f)
+        {
+            _currentLightIntensity = 0f;
+            _elementPointLight.intensity = 0f;
+            _elementPointLight.enabled = false;
+            return;
+        }
+
+        _elementPointLight.enabled = true;
+        _elementPointLight.color = _currentLightColor;
+
+        // Denyut cahaya halus (6%) khusus saat malam agar suasana terasa hidup
+        float pulse = (_isNight && _currentLightIntensity > 0.1f)
+            ? 1f + Mathf.Sin((Time.time * 2.2f) + _lightPulseSeed) * 0.06f
+            : 1f;
+
+        _elementPointLight.intensity = _currentLightIntensity * pulse;
+    }
+
+    private void EnsureElementLight()
+    {
+        if (_elementPointLight == null)
+        {
+            GameObject lightObj = new GameObject("ElementPoolLight");
+            lightObj.transform.SetParent(transform, false);
+            lightObj.transform.localPosition = new Vector3(0f, _lightHeightOffset, 0f);
+            _elementPointLight = lightObj.AddComponent<Light>();
+        }
+
+        _elementPointLight.type = LightType.Point;
+        _elementPointLight.shadows = LightShadows.None;
+        _elementPointLight.range = _elementLightRange;
+        _elementPointLight.intensity = 0f;
+        _elementPointLight.enabled = false;
+    }
+
+    private void UpdateElementLightTarget(bool instant)
+    {
+        if (_elementPointLight == null) return;
+
+        if (_phases != null)
+            _isNight = _phases.CurrentPhase == PhaseType.Night;
+
+        bool hasElementLight = IsRevealed && Data != null && Data.IsAlive
+            && Data.Stage == TreeStage.Complete && Data.Element != ElementType.None;
+
+        if (!hasElementLight)
+        {
+            _targetLightIntensity = 0f;
+        }
+        else
+        {
+            _targetLightIntensity = _isNight ? _nightLightIntensity : _dayLightIntensity;
+            _targetLightColor = ResolveElementLightColor(Data.Element);
+        }
+
+        _elementPointLight.range = _elementLightRange;
+
+        if (instant)
+        {
+            _currentLightIntensity = _targetLightIntensity;
+            _currentLightColor = _targetLightColor;
+            _elementPointLight.color = _currentLightColor;
+            _elementPointLight.intensity = _currentLightIntensity;
+            _elementPointLight.enabled = _currentLightIntensity > 0.001f;
+        }
+        else if (_targetLightIntensity > 0.001f)
+        {
+            if (_currentLightIntensity <= 0.001f)
+                _currentLightColor = _targetLightColor;
+            _elementPointLight.enabled = true;
+        }
+    }
+
+    private Color ResolveElementLightColor(ElementType element)
+    {
+        switch (element)
+        {
+            case ElementType.Fire: return _fireLightColor;
+            case ElementType.Water: return _waterLightColor;
+            case ElementType.Lightning: return _lightningLightColor;
+            default: return Color.white;
+        }
     }
 
     private void Refresh()
@@ -141,6 +309,7 @@ public class TreeNode : MonoBehaviour
         SetVisualState(_lightningTreeVisual, targetVisual == _lightningTreeVisual);
 
         UpdateWorldUiPosition();
+        UpdateElementLightTarget(instant: !gameObject.activeInHierarchy);
 
         Transform visualRoot = targetVisual != null ? targetVisual.transform : null;
         if (_visualFeedback != null)
