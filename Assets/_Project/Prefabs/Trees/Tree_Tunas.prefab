@@ -627,6 +627,15 @@ MonoBehaviour:
   _fireTreeVisual: {fileID: 1173915828839585150}
   _waterTreeVisual: {fileID: 3278567304685355843}
   _lightningTreeVisual: {fileID: 5917578699194797928}
+  _elementPointLight: {fileID: 0}
+  _lightHeightOffset: 1.65
+  _elementLightRange: 4.8
+  _nightLightIntensity: 2.6
+  _dayLightIntensity: 0.25
+  _lightFadeDuration: 1.8
+  _fireLightColor: {r: 1, g: 0.48, b: 0.16, a: 1}
+  _waterLightColor: {r: 0.22, g: 0.85, b: 1, a: 1}
+  _lightningLightColor: {r: 1, g: 0.84, b: 0.24, a: 1}
   _worldUiRoot: {fileID: 4389966035616963992}
   _initialUiHeight: 1.1
   _intermediateUiHeight: 3
