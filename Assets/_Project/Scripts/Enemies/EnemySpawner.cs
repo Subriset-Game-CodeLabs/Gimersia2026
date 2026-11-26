@@ -89,6 +89,9 @@ public class EnemySpawner : MonoBehaviour
 
     private void HandleNightStart(int night)
     {
+        // An earlier night listener may have synchronously finished the run.
+        if (_phases == null || _phases.CurrentPhase != PhaseType.Night) return;
+
         if (_progress.IsActive || _aliveEnemies.Count != 0)
         {
             Debug.LogError("Cannot start a second wave while the previous wave is active.", this);

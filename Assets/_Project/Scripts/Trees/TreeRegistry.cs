@@ -36,16 +36,8 @@ public class TreeRegistry : MonoBehaviour
         tree.Data.OnDied += () => OnTreeDied?.Invoke(tree);
     }
 
-    public int AliveCount
-    {
-        get
-        {
-            int count = 0;
-            for (int i = 0; i < _trees.Count; i++)
-                if (_trees[i].IsTargetable) count++;
-            return count;
-        }
-    }
+    // Survival/results count grown trees, not untouched growable Initial nodes.
+    public int AliveCount => GetGrownTreeCount();
 
     /// <summary>
     /// Menghitung jumlah pohon yang sudah mencapai minimal fase Intermediate.
@@ -57,7 +49,7 @@ public class TreeRegistry : MonoBehaviour
         for (int i = 0; i < _trees.Count; i++)
         {
             TreeNode tree = _trees[i];
-            if (!tree.IsTargetable || tree.Data == null) continue;
+            if (tree == null || !tree.IsTargetable || tree.Data == null) continue;
 
             if (includeComplete)
             {
@@ -80,7 +72,7 @@ public class TreeRegistry : MonoBehaviour
         for (int i = 0; i < _trees.Count; i++)
         {
             TreeNode tree = _trees[i];
-            if (tree.IsTargetable &&
+            if (tree != null && tree.IsTargetable &&
                 tree.Data.IsFullyGrown &&
                 tree.Data.Element == element)
             {
@@ -112,7 +104,7 @@ public class TreeRegistry : MonoBehaviour
         for (int i = 0; i < _trees.Count; i++)
         {
             TreeNode tree = _trees[i];
-            if (!tree.IsEnemyTargetable) continue;
+            if (tree == null || !tree.IsEnemyTargetable) continue;
 
             Vector3 d = tree.TargetPoint - from;
             d.y = 0f;

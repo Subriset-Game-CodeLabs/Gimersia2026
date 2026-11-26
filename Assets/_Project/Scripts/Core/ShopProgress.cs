@@ -11,6 +11,7 @@ public sealed class ShopProgress
     private SelectedStage _runStage;
     private bool _runFinished = true;
     private bool? _pendingOutcome;
+    private readonly HashSet<string> _completedLevelIds = new HashSet<string>(StringComparer.Ordinal);
     public ItemInventory Inventory { get; } = new ItemInventory();
     public int Coins { get; private set; }
     public bool IsDirty => _revision != _savedRevision;
@@ -21,6 +22,7 @@ public sealed class ShopProgress
     {
         _store = store;
         Coins = data.coins;
+        if (data.completedLevelIds != null) _completedLevelIds.UnionWith(data.completedLevelIds);
         foreach (ShopSaveData.ItemCount item in data.items) Inventory.TryAdd(item.id, item.quantity);
         Inventory.OnQuantityChanged += HandleQuantity;
     }
@@ -41,6 +43,10 @@ public sealed class ShopProgress
         error = recoveryNotice;
         return true;
     }
+
+    public bool IsLevelCompleted(string id) => id != null && _completedLevelIds.Contains(id);
+
+    public HashSet<string> CopyCompletedLevelIds() => new HashSet<string>(_completedLevelIds, StringComparer.Ordinal);
 
     public bool CanBuy(string id, int price) => !string.IsNullOrWhiteSpace(id)
         && price > 0 && Coins >= price && Inventory.GetQuantity(id) < int.MaxValue;
@@ -87,9 +93,13 @@ public sealed class ShopProgress
             int reward = won ? _runStage.WinCoins : 0;
             if (reward < 0 || Coins > int.MaxValue - reward)
             { error = "Victory coins exceed wallet capacity; reward not committed."; OnSaveError?.Invoke(error); return false; }
-            if (!_store.TrySave(Capture(Coins + reward), out error))
+            ShopSaveData proposed = Capture(Coins + reward);
+            if (won && !proposed.completedLevelIds.Contains(_runStage.Id))
+                proposed.completedLevelIds.Add(_runStage.Id);
+            if (!_store.TrySave(proposed, out error))
             { OnSaveError?.Invoke(error); return false; }
             Coins += reward;
+            if (won) _completedLevelIds.Add(_runStage.Id);
             _savedRevision = _revision;
             _runFinished = true;
             _pendingOutcome = null;
@@ -125,6 +135,8 @@ public sealed class ShopProgress
     private ShopSaveData Capture(int coins)
     {
         var data = new ShopSaveData { coins = coins };
+        data.completedLevelIds.AddRange(_completedLevelIds);
+        data.completedLevelIds.Sort(StringComparer.Ordinal);
         foreach (KeyValuePair<string, int> item in Inventory.CaptureQuantities())
             data.items.Add(new ShopSaveData.ItemCount { id = item.Key, quantity = item.Value });
         data.items.Sort((a, b) => StringComparer.Ordinal.Compare(a.id, b.id));

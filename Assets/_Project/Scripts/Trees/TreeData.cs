@@ -27,9 +27,10 @@ public class TreeData
     }
 
     public bool HasElement => Stage == TreeStage.Complete && Element != ElementType.None;
-    public bool IsAlive => true;
-    public bool IsVulnerableToEnemies => Stage >= TreeStage.Intermediate && Hp > 0f;
-    public bool IsFullyGrown => Stage == TreeStage.Complete;
+    // Untouched Initial nodes are growable; a destroyed node can never grow again.
+    public bool IsAlive { get; private set; } = true;
+    public bool IsVulnerableToEnemies => IsAlive && Stage >= TreeStage.Intermediate && Hp > 0f;
+    public bool IsFullyGrown => IsAlive && Stage == TreeStage.Complete;
     public bool NeedsHealing => IsVulnerableToEnemies && Hp < MaxHp;
 
     public float ElementCooldownRemaining =>
@@ -80,7 +81,7 @@ public class TreeData
 
     public void SetStage(TreeStage stage)
     {
-        if (Stage == stage) return;
+        if (!IsAlive || Stage == stage) return;
 
         bool isUpgrade = stage > Stage;
         Stage = stage;
@@ -160,6 +161,12 @@ public class TreeData
         }
 
         Hp = Mathf.Max(0f, Hp - amount);
+        if (Hp == 0f && Stage == TreeStage.Intermediate)
+        {
+            // Commit death before callbacks: a retaliation can synchronously clear the wave.
+            IsAlive = false;
+            ClearItemStatus();
+        }
         OnHpChanged?.Invoke();
         OnDamaged?.Invoke(amount, hitDirection);
         if (attacker != null)
@@ -190,6 +197,7 @@ public class TreeData
         }
         else if (Stage == TreeStage.Intermediate)
         {
+            // Keep the existing downgrade feedback step, but Initial no longer means regrowable here.
             Stage = TreeStage.Initial;
             Element = ElementType.None;
             Hp = 0f;

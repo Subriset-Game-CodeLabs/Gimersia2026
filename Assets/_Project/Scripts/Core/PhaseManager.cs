@@ -155,6 +155,14 @@ public class PhaseManager : MonoBehaviour
 
     private void BeginNight()
     {
+        // Day one may start empty, but night requires a grown survivor.
+        // Resolve before publishing night so no listener can start a wave after defeat.
+        if (TreeRegistry.Instance != null && TreeRegistry.Instance.AliveCount == 0)
+        {
+            Finish();
+            return;
+        }
+
         CurrentPhase = PhaseType.Night;
         PhaseDuration = 0f;
         TimeRemaining = 0f;
