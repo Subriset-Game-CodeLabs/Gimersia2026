@@ -56,7 +56,11 @@ public class TileHover : MonoBehaviour
         if (view == _hovered) return;
         if (_hovered != null) _hovered.SetHighlighted(false);
         _hovered = view;
-        if (_hovered != null) _hovered.SetHighlighted(true);
+        if (_hovered != null)
+        {
+            _hovered.SetHighlighted(true);
+            AudioManager.Instance.PlayTileHover(_hovered.CleaningPoint);
+        }
     }
 
     private void SetHoveredTile(IslandTile tile)
@@ -64,7 +68,11 @@ public class TileHover : MonoBehaviour
         if (tile == _hoveredTile) return;
         if (_hoveredTile != null) _hoveredTile.SetHighlighted(false);
         _hoveredTile = tile;
-        if (_hoveredTile != null) _hoveredTile.SetHighlighted(true);
+        if (_hoveredTile != null)
+        {
+            _hoveredTile.SetHighlighted(true);
+            AudioManager.Instance.PlayTileHover(_hoveredTile.MovementPoint);
+        }
     }
 
     private void OnDisable()

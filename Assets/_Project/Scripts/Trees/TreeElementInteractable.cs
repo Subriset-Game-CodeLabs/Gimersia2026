@@ -95,7 +95,6 @@ public class TreeElementInteractable : MonoBehaviour, IInteractable
         if (_workers == null) return;
         _workers.Remove(spirit);
 
-        // Jika seluruh Spirit meninggalkan proses pergantian elemen, batalkan & sembunyikan UI lingkaran
         if (_workers.Count == 0 && _progress > 0f)
         {
             CancelQueue();
@@ -116,7 +115,11 @@ public class TreeElementInteractable : MonoBehaviour, IInteractable
         UpdateProgressVfx();
         _progress += _workers.GetShare(deltaTime);
 
-        if (_progress < Duration) return;
+        if (_progress < Duration)
+        {
+            AudioManager.Instance.PlayTreeWorkTick(InteractionPoint);
+            return;
+        }
 
         if (_node.Data.CompleteReassignment(_pendingElement))
         {

@@ -4,10 +4,9 @@ using UnityEngine;
 public class TreeHealInteractable : MonoBehaviour, IInteractable
 {
     [SerializeField] private TeamworkSettings _teamworkSettings;
-    // TODO(balance): placeholder daytime HP restored per second.
     [SerializeField] private float _hpPerSecond = 10f;
     [SerializeField] private float _nightSpeedMultiplier = 0.5f;
-    [SerializeField] private bool _logHealing = true; // Temporary Play-mode diagnostics.
+    [SerializeField] private bool _logHealing = true;
 
     private TreeNode _node;
     private WorkerSet _workers;
@@ -73,6 +72,9 @@ public class TreeHealInteractable : MonoBehaviour, IInteractable
         float previousHp = _node.Data.Hp;
         _node.Data.Heal(work * Mathf.Max(0f, _hpPerSecond) *
                         Mathf.Max(0f, phaseMultiplier));
+
+        AudioManager.Instance.PlayTreeHealTick(InteractionPoint);
+
         if (!_loggingSession) return;
 
         _healedSinceLog += _node.Data.Hp - previousHp;

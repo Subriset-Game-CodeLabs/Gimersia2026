@@ -76,7 +76,8 @@ public class SpiritCommander : MonoBehaviour
             if (controller != null) controller.MoveTo(worldPoint);
         }
 
-        _selection.ClearSelection();
+        AudioManager.Instance.PlaySpiritCommandMove();
+        _selection.ClearSelection(playSound: false);
     }
 
     public void InteractSelected(IInteractable target)
@@ -91,7 +92,7 @@ public class SpiritCommander : MonoBehaviour
             if (controller != null) controller.Interact(target);
         }
 
-        _selection.ClearSelection();
+        _selection.ClearSelection(playSound: false);
     }
 
     public void AttackSelected(EnemyController enemy, Bounds islandBounds)
@@ -117,7 +118,8 @@ public class SpiritCommander : MonoBehaviour
             controllers[i].Attack(enemy, islandBounds, i, squadCount);
         }
 
-        _selection.ClearSelection();
+        AudioManager.Instance.PlaySpiritCommandAttack();
+        _selection.ClearSelection(playSound: false);
     }
 
     private EnemyController FindEnemyNearClick(Vector3 clickWorldPoint)

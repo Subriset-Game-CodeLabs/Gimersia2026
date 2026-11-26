@@ -41,5 +41,9 @@ public class GridInteractable : MonoBehaviour, IInteractable
             // BlockView listens to OnStateChanged and recolors itself.
             _block.SetState(GridState.Clean);
         }
+        else
+        {
+            AudioManager.Instance.PlayBlockCleaningTick(InteractionPoint);
+        }
     }
 }

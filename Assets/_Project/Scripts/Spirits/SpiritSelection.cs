@@ -21,6 +21,7 @@ public class SpiritSelection : MonoBehaviour
 
         _selected.Add(spirit);
         spirit.SetSelected(true);
+        AudioManager.Instance.PlaySpiritSelect();
 
         OnSelectionChanged?.Invoke();
     }
@@ -35,7 +36,7 @@ public class SpiritSelection : MonoBehaviour
 
         if (_selected.Count == 1 && _selected[0] == spirit)
         {
-            ClearSelection();
+            ClearSelection(playSound: true);
             return;
         }
 
@@ -54,23 +55,30 @@ public class SpiritSelection : MonoBehaviour
         {
             _selected.RemoveAt(existingIndex);
             spirit.SetSelected(false);
+            AudioManager.Instance.PlaySpiritDeselect();
             OnSelectionChanged?.Invoke();
             return;
         }
 
-        if (_selected.Count >= _maxSelectableSpirits) return;
+        if (_selected.Count >= _maxSelectableSpirits)
+        {
+            AudioManager.Instance.PlayUiActionBlocked();
+            return;
+        }
 
         _selected.Add(spirit);
         spirit.SetSelected(true);
+        AudioManager.Instance.PlaySpiritSelect();
         OnSelectionChanged?.Invoke();
     }
 
-    public void ClearSelection()
+    public void ClearSelection(bool playSound = true)
     {
         if (_selected.Count == 0) return;
 
         ClearRings();
         _selected.Clear();
+        if (playSound) AudioManager.Instance.PlaySpiritDeselect();
         OnSelectionChanged?.Invoke();
     }
 
@@ -125,6 +133,9 @@ public class SpiritSelection : MonoBehaviour
             spirit.SetSelected(true);
         }
 
+        if (_selected.Count > 0)
+            AudioManager.Instance.PlaySpiritSelect();
+
         OnSelectionChanged?.Invoke();
     }
 
@@ -141,7 +152,7 @@ public class SpiritSelection : MonoBehaviour
 
         if (availableCount > 0 && _selected.Count == availableCount)
         {
-            ClearSelection();
+            ClearSelection(playSound: true);
             return;
         }
 

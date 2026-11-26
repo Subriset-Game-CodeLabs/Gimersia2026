@@ -18,7 +18,6 @@ public class SpiritController : MonoBehaviour
     {
         if (!CanReceiveTeamHaste || !_itemStatus.TryApplyHaste(duration, moveMultiplier, attackMultiplier)) return false;
         RefreshMovementSpeed();
-        // Keep idle buffed spirits ticking so expiry and GameObject disable are observed.
         enabled = true;
         return true;
     }
@@ -94,6 +93,7 @@ public class SpiritController : MonoBehaviour
     private float _offIslandOutOfRangeTimer;
 
     private bool _hasPendingShot;
+    private bool _isSpecialPendingShot;
     private float _pendingDamage;
     private float _pendingProjectileScale;
     private EnemyController _pendingEnemy;
@@ -136,7 +136,6 @@ public class SpiritController : MonoBehaviour
 
     private void OnDisable()
     {
-        // Component disable is also our normal idle optimization, not despawning.
         if (!gameObject.activeInHierarchy) ClearItemStatus();
         Stop();
     }
@@ -214,6 +213,7 @@ public class SpiritController : MonoBehaviour
     private void ClearPendingShot()
     {
         _hasPendingShot = false;
+        _isSpecialPendingShot = false;
         _pendingEnemy = null;
         _pendingDamage = 0f;
         _pendingProjectileScale = 1f;
@@ -349,6 +349,13 @@ public class SpiritController : MonoBehaviour
         RefreshMovementSpeed();
         if (State == SpiritState.Idle && !_itemStatus.IsActive) enabled = false;
         if (Time.timeScale <= 0f) return;
+
+        if (_agent != null && _agent.isActiveAndEnabled && _agent.isOnNavMesh &&
+            !_agent.isStopped && _agent.velocity.sqrMagnitude > 0.25f)
+        {
+            AudioManager.Instance.PlaySpiritMoveStep(transform.position);
+        }
+
         if (_hasPendingShot && (_animator == null || !_animator.IsAttackInProgress))
         {
             TriggerAnimationProjectileRelease();
@@ -433,8 +440,6 @@ public class SpiritController : MonoBehaviour
             return;
         }
 
-        // 1. Jika musuh target benar-benar mati:
-        //    Cari musuh lain yang SUDAH berada di dalam Attack Range Spirit; jika tidak ada, langsung Idle di tempat.
         if (_enemy == null || !_enemy.IsAlive)
         {
             if (!TryAutoChainEnemyInRange())
@@ -444,8 +449,6 @@ public class SpiritController : MonoBehaviour
             }
         }
 
-        // 2. Khusus Worm yang sedang menyelam sementara:
-        //    Spirit tetap menunggu (Idle) di tepi pantai sampai Worm muncul kembali.
         if (_enemy.IsHiddenUnderwater)
         {
             _wasTargetHiddenUnderwater = true;
@@ -455,10 +458,6 @@ public class SpiritController : MonoBehaviour
             return;
         }
 
-        // 3. Begitu Worm muncul kembali ke permukaan laut:
-        //    - Jika masih dalam Attack Range -> lanjut serang Worm.
-        //    - Jika di luar Attack Range -> auto-chain ke musuh lain dalam Attack Range;
-        //      jika tidak ada musuh lain dalam Attack Range, bergerak ke tepi pantai terdekat Worm (termasuk saat di LastPoint).
         if (_wasTargetHiddenUnderwater)
         {
             _wasTargetHiddenUnderwater = false;
@@ -485,11 +484,6 @@ public class SpiritController : MonoBehaviour
         float distance = toEnemy.magnitude;
         float effectiveRange = GetEffectiveAttackRange(_enemy);
 
-        // =====================================================================
-        // KHUSUS WORM DI LASTPOINT:
-        // Spirit berjalan dulu ke tepi pulau, lalu langsung menyerang & menembakkan proyektil
-        // meskipun Worm di LastPoint berada di luar Attack Range!
-        // =====================================================================
         if (_enemy.IsWormAtLastPoint)
         {
             if (!_hasReachedShoreWaitSpot)
@@ -504,21 +498,14 @@ public class SpiritController : MonoBehaviour
             return;
         }
 
-        // =====================================================================
-        // KONDISI A: Musuh SUDAH berada di dalam Attack Range dari posisi Spirit
-        // =====================================================================
         if (distance <= effectiveRange)
         {
             ExecuteRangedAttackAtCurrentPosition(toEnemy, distance);
             return;
         }
 
-        // =====================================================================
-        // KONDISI B: Musuh berada DI LUAR Attack Range dari posisi Spirit
-        // =====================================================================
         UnregisterAttacker();
 
-        // B1. Musuh berada di luar pulau (Laut: Skeleton/Monster/Worm awal, atau Terbang: Bat)
         if (_enemy.IsOffIslandOrFlying)
         {
             if (_hasEngagedCurrentTarget)
@@ -549,7 +536,6 @@ public class SpiritController : MonoBehaviour
             return;
         }
 
-        // B2. Musuh berada di DALAM pulau (di luar Attack Range)
         if (_hasEngagedCurrentTarget && TryAutoChainEnemyInRange())
         {
             return;
@@ -791,7 +777,6 @@ public class SpiritController : MonoBehaviour
             damage *= _specialAttackDamageMultiplier;
         }
 
-        // Snapshot the fully calculated damage, including special attacks, once per swing.
         float itemDamageMultiplier = _itemStatus.DamageMultiplier;
         if (_logItemDamageSnapshots && Time.time >= _nextItemDamageLogTime)
         {
@@ -803,6 +788,7 @@ public class SpiritController : MonoBehaviour
         _pendingDamage = damage;
         _pendingProjectileScale = isSpecialAttack ? _specialProjectileScale : 1f;
         _hasPendingShot = true;
+        _isSpecialPendingShot = isSpecialAttack;
 
         _attackCooldown = _combatSettings.AttackInterval / Mathf.Max(0.01f, attackSpeed);
     }
@@ -815,6 +801,7 @@ public class SpiritController : MonoBehaviour
         EnemyController target = _pendingEnemy != null ? _pendingEnemy : _enemy;
         float damage = _pendingDamage;
         float scale = _pendingProjectileScale;
+        bool isSpecial = _isSpecialPendingShot;
         ClearPendingShot();
 
         if (target == null || !target.IsTargetableBySpirit) return;
@@ -831,10 +818,12 @@ public class SpiritController : MonoBehaviour
 
             SpiritProjectile projectile = Instantiate(prefab, spawnPoint.position, rotation);
             projectile.Initialize(target, damage, scale);
+            AudioManager.Instance.PlaySpiritAttack(Element, isSpecial, spawnPoint.position);
         }
         else
         {
             target.TakeDamage(damage, transform.position);
+            AudioManager.Instance.PlaySpiritAttack(Element, isSpecial, transform.position);
         }
     }
 

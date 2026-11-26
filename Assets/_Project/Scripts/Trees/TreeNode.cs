@@ -91,7 +91,6 @@ public class TreeNode : MonoBehaviour
 
     public void Initialize(TreeDefinition definition)
     {
-        // A reused node must not inherit the previous tree's runtime shield.
         if (Data != null) Data.ClearItemStatus();
 
         Data = new TreeData(definition);
@@ -125,7 +124,6 @@ public class TreeNode : MonoBehaviour
 
     private void OnDisable()
     {
-        // Hiding a tree (block recaptured or tree dead) ends any protection on it.
         if (Data != null) Data.ClearItemStatus();
     }
 
@@ -251,6 +249,7 @@ public class TreeNode : MonoBehaviour
 
     public void PlayClickFeedback()
     {
+        AudioManager.Instance.PlayTreeClick(transform.position);
         if (_visualFeedback != null)
             _visualFeedback.PlayClickBounce();
     }
@@ -260,6 +259,15 @@ public class TreeNode : MonoBehaviour
         SpawnTransitionVfx(_stageUpVfxPrefab);
         if (_visualFeedback != null)
             _visualFeedback.PlayStageUpTransition();
+
+        if (Data != null && Data.Element != ElementType.None)
+        {
+            AudioManager.Instance.PlayTreeElementAssigned(Data.Element, transform.position);
+        }
+        else
+        {
+            AudioManager.Instance.PlayTreeStageUp(transform.position);
+        }
     }
 
     private void HandleStageDowngraded()
@@ -267,10 +275,13 @@ public class TreeNode : MonoBehaviour
         SpawnTransitionVfx(_stageDownVfxPrefab);
         if (_visualFeedback != null)
             _visualFeedback.PlayStageDownTransition();
+
+        AudioManager.Instance.PlayTreeStageDown(transform.position);
     }
 
     private void HandleDamaged(float amount, Vector3 hitDirection)
     {
+        AudioManager.Instance.PlayTreeHitByEnemy(transform.position);
         if (_visualFeedback != null)
             _visualFeedback.PlayEnemyHitRecoil(hitDirection);
     }

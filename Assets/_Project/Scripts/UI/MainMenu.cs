@@ -44,6 +44,14 @@ public class MainMenu : MonoBehaviour
         _musicSlider.onValueChanged.AddListener(SetMusicVolume);
         _sfxSlider.onValueChanged.AddListener(SetSfxVolume);
 
+        // Pasang SFX hover & klik otomatis ke seluruh tombol Main Menu
+        UIButtonAudio.Attach(_startButton, UIButtonAudio.ClickSoundType.StartGame);
+        UIButtonAudio.Attach(_settingsButton, UIButtonAudio.ClickSoundType.StandardClick);
+        UIButtonAudio.Attach(_creditButton, UIButtonAudio.ClickSoundType.StandardClick);
+        UIButtonAudio.Attach(_exitButton, UIButtonAudio.ClickSoundType.StandardClick);
+        UIButtonAudio.Attach(_settingsCloseButton, UIButtonAudio.ClickSoundType.None);
+        UIButtonAudio.Attach(_creditCloseButton, UIButtonAudio.ClickSoundType.None);
+
 #if UNITY_WEBGL && !UNITY_EDITOR
         // A browser tab cannot be closed by the game.
         _exitButton.gameObject.SetActive(false);
@@ -56,6 +64,7 @@ public class MainMenu : MonoBehaviour
     {
         // The main menu can be entered from a paused result screen.
         Time.timeScale = 1f;
+        AudioManager.Instance.PlayMenuMusic();
         _focusNavigator.SetDefaultTarget(_startButton, clearCurrentSelection: true);
     }
 
@@ -99,6 +108,7 @@ public class MainMenu : MonoBehaviour
         _openPopup = popup;
         _focusBeforePopup = returnTarget;
         popup.SetActive(true);
+        AudioManager.Instance.PlayUiPopupOpen();
         // Trap keyboard/gamepad navigation inside the pop-up without auto-highlighting anything.
         _mainPanel.interactable = false;
         _focusNavigator.SetDefaultTarget(firstControl, clearCurrentSelection: true);
@@ -108,6 +118,7 @@ public class MainMenu : MonoBehaviour
     {
         if (_openPopup == null) return;
         if (_openPopup == _settingsPopup) GameAudioSettings.Save();
+        AudioManager.Instance.PlayUiPopupClose();
         _openPopup.SetActive(false);
         _openPopup = null;
         _mainPanel.interactable = true;
@@ -115,6 +126,14 @@ public class MainMenu : MonoBehaviour
             clearCurrentSelection: true);
     }
 
-    private static void SetMusicVolume(float value) => GameAudioSettings.MusicVolume = value;
-    private static void SetSfxVolume(float value) => GameAudioSettings.SfxVolume = value;
+    private static void SetMusicVolume(float value)
+    {
+        GameAudioSettings.MusicVolume = value;
+    }
+
+    private static void SetSfxVolume(float value)
+    {
+        GameAudioSettings.SfxVolume = value;
+        AudioManager.Instance.PlayUiSliderTick();
+    }
 }

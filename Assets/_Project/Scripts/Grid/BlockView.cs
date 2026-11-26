@@ -79,7 +79,14 @@ public class BlockView : MonoBehaviour
         if (_data != null) _data.OnStateChanged -= HandleStateChanged;
     }
 
-    private void HandleStateChanged(GridBlockData _) => RefreshState();
+    private void HandleStateChanged(GridBlockData _)
+    {
+        if (_data != null && _data.State == GridState.Clean)
+        {
+            AudioManager.Instance.PlayBlockCleaned(CleaningPoint);
+        }
+        RefreshState();
+    }
 
     private void RefreshState()
     {
@@ -141,6 +148,8 @@ public class BlockView : MonoBehaviour
     public void TriggerClickFeedback(IReadOnlyList<SpiritView> dispatchedSpirits)
     {
         if (_data == null || _data.State != GridState.Corrupted) return;
+
+        AudioManager.Instance.PlayTileCommandClick(CleaningPoint);
 
         _clickDipTimer = _clickDipDuration;
         _trackedOrders.Clear();

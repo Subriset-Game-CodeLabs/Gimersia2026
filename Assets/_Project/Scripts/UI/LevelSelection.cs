@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -48,8 +49,17 @@ public class LevelSelection : MonoBehaviour
         if (!TryGetComponent(out _focusNavigator))
             _focusNavigator = gameObject.AddComponent<UIFocusOnNavigate>();
 
-        if (_backButton != null) _backButton.onClick.AddListener(SceneFlow.LoadMainMenu);
-        if (_startButton != null) _startButton.onClick.AddListener(StartSelectedLevel);
+        if (_backButton != null)
+        {
+            _backButton.onClick.AddListener(HandleBackClicked);
+            BindButtonHover(_backButton);
+        }
+
+        if (_startButton != null)
+        {
+            _startButton.onClick.AddListener(StartSelectedLevel);
+            BindButtonHover(_startButton);
+        }
 
         if (_nodes != null)
         {
@@ -60,14 +70,32 @@ public class LevelSelection : MonoBehaviour
                 if (node == null) continue;
                 bool unlocked = _levels != null && i < _levels.Length && _levels[i].Unlocked;
                 node.Configure(i + 1, unlocked, selected: false);
-                node.Button.onClick.AddListener(() => SelectLevel(index));
+                node.Button.onClick.AddListener(() => SelectLevel(index, playSound: true));
+                BindButtonHover(node.Button);
             }
         }
+    }
+
+    private void BindButtonHover(Button button)
+    {
+        if (button == null) return;
+        EventTrigger trigger = button.GetComponent<EventTrigger>();
+        if (trigger == null) trigger = button.gameObject.AddComponent<EventTrigger>();
+
+        var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        entry.callback.AddListener(_ =>
+        {
+            if (button.interactable)
+                AudioManager.Instance.PlayUiHover();
+        });
+        trigger.triggers.Add(entry);
     }
 
     private void Start()
     {
         Time.timeScale = 1f;
+        AudioManager.Instance.PlayMenuMusic();
+
         SelectFirstUnlocked();
         // Start with no button pre-hovered; first Arrow press focuses START.
         _focusNavigator.SetDefaultTarget(_startButton, clearCurrentSelection: true);
@@ -75,7 +103,7 @@ public class LevelSelection : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (_backButton != null) _backButton.onClick.RemoveListener(SceneFlow.LoadMainMenu);
+        if (_backButton != null) _backButton.onClick.RemoveListener(HandleBackClicked);
         if (_startButton != null) _startButton.onClick.RemoveListener(StartSelectedLevel);
         if (_nodes != null)
         {
@@ -88,7 +116,14 @@ public class LevelSelection : MonoBehaviour
     {
         Keyboard kb = Keyboard.current;
         if (kb != null && kb.escapeKey.wasPressedThisFrame)
-            SceneFlow.LoadMainMenu();
+            HandleBackClicked();
+    }
+
+    private void HandleBackClicked()
+    {
+        if (SceneFlow.IsLoading) return;
+        AudioManager.Instance.PlayUiClick();
+        SceneFlow.LoadMainMenu();
     }
 
     private void SelectFirstUnlocked()
@@ -97,22 +132,30 @@ public class LevelSelection : MonoBehaviour
         for (int i = 0; i < _levels.Length; i++)
             if (_levels[i] != null && _levels[i].Unlocked && ShopRuntime.SelectedStage != null
                 && _levels[i].Id == ShopRuntime.SelectedStage.Id)
-            { SelectLevel(i); return; }
+            { SelectLevel(i, playSound: false); return; }
         for (int i = 0; i < _levels.Length; i++)
         {
             if (_levels[i].Unlocked)
             {
-                SelectLevel(i);
+                SelectLevel(i, playSound: false);
                 return;
             }
         }
-        SelectLevel(0);
+        SelectLevel(0, playSound: false);
     }
 
     public void SelectLevel(int index)
     {
+        SelectLevel(index, playSound: false);
+    }
+
+    private void SelectLevel(int index, bool playSound)
+    {
         if (_levels == null || index < 0 || index >= _levels.Length) return;
         if (!_levels[index].Unlocked) return;
+
+        if (playSound && _selectedIndex != index)
+            AudioManager.Instance.PlayUiLevelNodeSelect();
 
         _selectedIndex = index;
         LevelEntry entry = _levels[index];
@@ -158,6 +201,8 @@ public class LevelSelection : MonoBehaviour
             { Debug.LogError("Level IDs must be unique and stable.", this); return; }
         if (!ShopRuntime.TrySelectStage(entry.Id, entry.SceneName, entry.WinCoins, out string error))
         { Debug.LogError(error, this); return; }
+
+        AudioManager.Instance.PlayUiClick();
         SceneFlow.Load(SceneFlow.PreparationShopScene);
     }
 }

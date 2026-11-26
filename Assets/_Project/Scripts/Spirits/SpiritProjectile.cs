@@ -66,6 +66,7 @@ public class SpiritProjectile : MonoBehaviour
         if (_target != null && _target.IsAlive)
         {
             _target.TakeDamage(_damage, transform.position);
+            AudioManager.Instance.PlaySpiritProjectileHit(transform.position);
         }
 
         if (_hitVfxPrefab != null)

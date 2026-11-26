@@ -193,6 +193,8 @@ public class TreeElementTurret : MonoBehaviour
         SpiritProjectile projectile = Instantiate(prefab, spawnPos, rot);
         projectile.Initialize(target, power, _downgradeProjectileScale);
 
+        AudioManager.Instance.PlayTreeDowngradeShot(spawnPos);
+
         if (_downgradeShootVfxPrefab != null)
         {
             Instantiate(_downgradeShootVfxPrefab, spawnPos, rot);
@@ -210,7 +212,6 @@ public class TreeElementTurret : MonoBehaviour
         if (_neutralDowngradeProjectilePrefab != null)
             return _neutralDowngradeProjectilePrefab;
 
-        // Fallback jika prefab netral belum diisi di Inspector
         if (_fireProjectilePrefab != null) return _fireProjectilePrefab;
         if (_waterProjectilePrefab != null) return _waterProjectilePrefab;
         return _lightningProjectilePrefab;
@@ -276,6 +277,8 @@ public class TreeElementTurret : MonoBehaviour
 
         Transform[] spawnPoints = GetSpawnPointArray(treeElement);
         float damagePerProjectile = CalculateDamage(treeElement, target, out float attackSpeedMult);
+
+        AudioManager.Instance.PlayTreeTurretShoot(treeElement, transform.position);
 
         for (int i = 0; i < ProjectilesPerVolley; i++)
         {

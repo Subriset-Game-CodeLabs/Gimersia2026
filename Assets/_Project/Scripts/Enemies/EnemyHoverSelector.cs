@@ -67,7 +67,11 @@ public class EnemyHoverSelector : MonoBehaviour
         _hoveredEnemy = enemy;
         CurrentHoveredEnemy = enemy;
 
-        if (_hoveredEnemy != null) _hoveredEnemy.SetHovered(true);
+        if (_hoveredEnemy != null)
+        {
+            _hoveredEnemy.SetHovered(true);
+            AudioManager.Instance.PlayEnemyHover(_hoveredEnemy.transform.position);
+        }
         OnHoveredEnemyChanged?.Invoke(_hoveredEnemy);
     }
 

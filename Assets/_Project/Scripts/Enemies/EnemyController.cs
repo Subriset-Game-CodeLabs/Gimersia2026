@@ -240,7 +240,6 @@ public class EnemyController : MonoBehaviour
         if (_hpBar != null) _hpBar.Bind(this, Hp);
         if (_visualFeedback != null) _visualFeedback.SetCombatHighlighted(false);
 
-        // Worm belum menentukan pohon target sebelum tiba di LastPoint
         if (definition != null && definition.MovementArchetype != EnemyMovementArchetype.AquaticAmbushRanged)
         {
             TreeRegistry registry = TreeRegistry.Instance;
@@ -276,6 +275,7 @@ public class EnemyController : MonoBehaviour
                 transform.position = pos;
                 _phase = BehaviorPhase.AmphibiousEmerging;
                 SetAnimSpeed(1f);
+                AudioManager.Instance.PlayEnemySpawnWater(transform.position);
                 break;
 
             case EnemyMovementArchetype.AquaticAmbushRanged:
@@ -296,6 +296,7 @@ public class EnemyController : MonoBehaviour
                 transform.position = pos;
                 _phase = BehaviorPhase.FlyingApproach;
                 SetAnimSpeed(1f);
+                AudioManager.Instance.PlayEnemySpawnAir(transform.position);
                 break;
         }
     }
@@ -369,7 +370,6 @@ public class EnemyController : MonoBehaviour
 
     private void PauseForFreeze()
     {
-        // A refresh must not replace the original animator speed with zero.
         if (!_freezePresentationActive)
         {
             _animatorSpeedBeforeFreeze = _animator != null ? _animator.speed : 1f;
@@ -426,6 +426,7 @@ public class EnemyController : MonoBehaviour
         if (IsAlive)
         {
             _staggerTimer = 0.08f;
+            AudioManager.Instance.PlayEnemyHit(transform.position);
             return;
         }
 
@@ -450,6 +451,8 @@ public class EnemyController : MonoBehaviour
         DisableAgent();
 
         if (_hpBar != null) _hpBar.Hide();
+
+        AudioManager.Instance.PlayEnemyDeath(transform.position);
 
         SetAnimSpeed(0f);
         if (_animator != null)
@@ -676,6 +679,8 @@ public class EnemyController : MonoBehaviour
         SetState(EnemyState.Moving);
         SetAnimSpeed(0f);
 
+        AudioManager.Instance.PlayEnemyIslandJump(transform.position);
+
         if (_animator != null)
         {
             _animator.ResetTrigger(AnimAttackHash);
@@ -791,6 +796,8 @@ public class EnemyController : MonoBehaviour
         else
             FaceTowardIslandShore();
 
+        AudioManager.Instance.PlayEnemyWormEmerge(transform.position);
+
         if (_animator != null) _animator.SetTrigger(AnimSpawnHash);
     }
 
@@ -836,6 +843,7 @@ public class EnemyController : MonoBehaviour
                 {
                     _phase = BehaviorPhase.WormSubmerging;
                     _phaseTimer = 0f;
+                    AudioManager.Instance.PlayEnemyWormSubmerge(transform.position);
                     if (_animator != null) _animator.SetTrigger(AnimSubmergeHash);
                 }
                 break;
@@ -1050,9 +1058,11 @@ public class EnemyController : MonoBehaviour
             Vector3 origin = _firePoint != null ? _firePoint.position : transform.position + Vector3.up * 0.9f;
             EnemyProjectile projectile = Instantiate(Definition.ProjectilePrefab, origin, transform.rotation);
             projectile.Launch(_target, finalDamage, Definition.ProjectileSpeed, Definition.ProjectileLifetime, this);
+            AudioManager.Instance.PlayEnemyAttackRanged(origin);
             return;
         }
 
+        AudioManager.Instance.PlayEnemyAttackMelee(transform.position);
         _target.Data.TakeDamage(finalDamage, this);
     }
 

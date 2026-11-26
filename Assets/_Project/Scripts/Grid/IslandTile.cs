@@ -138,6 +138,8 @@ public class IslandTile : MonoBehaviour
     {
         if (!IsSelectable) return;
 
+        AudioManager.Instance.PlayTileCommandClick(MovementPoint);
+
         _clickDipTimer = _clickDipDuration;
         _trackedOrders.Clear();
 

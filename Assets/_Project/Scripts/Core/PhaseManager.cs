@@ -1,5 +1,3 @@
-
-
 using System;
 using UnityEngine;
 
@@ -131,6 +129,10 @@ public class PhaseManager : MonoBehaviour
             _preRewardTimeScale = Time.timeScale;
             _rewardPaused = true;
             Time.timeScale = 0f;
+
+            AudioManager.Instance.PlayNightCleared();
+            AudioManager.Instance.PlayDayMusic();
+
             OnRewardStart?.Invoke(CurrentDay);
             if (CurrentPhase != PhaseType.RewardSelection) return;
             if (_rewards != null) _rewards.BeginSelection();
@@ -144,6 +146,10 @@ public class PhaseManager : MonoBehaviour
         CurrentPhase = PhaseType.Day;
         PhaseDuration = _settings.DayDuration;
         TimeRemaining = PhaseDuration;
+
+        AudioManager.Instance.PlayDayMusic();
+        AudioManager.Instance.PlayPhaseDayStart();
+
         OnDayStart?.Invoke(day);
     }
 
@@ -152,6 +158,10 @@ public class PhaseManager : MonoBehaviour
         CurrentPhase = PhaseType.Night;
         PhaseDuration = 0f;
         TimeRemaining = 0f;
+
+        AudioManager.Instance.PlayNightMusic();
+        AudioManager.Instance.PlayPhaseNightStart();
+
         OnNightStart?.Invoke(CurrentDay);
     }
 

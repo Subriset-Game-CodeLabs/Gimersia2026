@@ -77,10 +77,14 @@ public class EnemyProjectile : MonoBehaviour
         TreeNode hitTarget = _target;
         EnemyController attacker = _owner;
         float damage = _damage;
+        Vector3 impactPos = transform.position;
         // Retire before damage: death/phase callbacks can run synchronously.
         Retire();
         if (hitTarget != null && hitTarget.IsTargetable)
+        {
+            AudioManager.Instance.PlayEnemyProjectileHit(impactPos);
             hitTarget.Data.TakeDamage(damage, attacker);
+        }
     }
 
     private void BindPhases()

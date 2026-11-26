@@ -31,7 +31,6 @@ public class TreeInteractable : MonoBehaviour, IInteractable
 
     private void Start()
     {
-        // Island generation may initialize this tree before PhaseManager.Awake.
         _phases = PhaseManager.Instance;
     }
 
@@ -76,7 +75,6 @@ public class TreeInteractable : MonoBehaviour, IInteractable
     {
         if (!isActiveAndEnabled || !CanGrowInstantly) return false;
 
-        // Clear the work session before stage events notify spirits and visuals.
         _progress = 0f;
         _awaitingNewCommand = false;
         _node.SetGrowthVfxActive(false);
@@ -84,9 +82,6 @@ public class TreeInteractable : MonoBehaviour, IInteractable
         return true;
     }
 
-    /// <summary>
-    /// Dipanggil saat pemain mengklik pohon untuk memulai sesi pertumbuhan fase berikutnya.
-    /// </summary>
     public void PrepareForNewCommand()
     {
         _awaitingNewCommand = false;
@@ -104,7 +99,6 @@ public class TreeInteractable : MonoBehaviour, IInteractable
         if (_workers == null) return;
         _workers.Remove(spirit);
 
-        // Jika seluruh Spirit meninggalkan pohon sebelum fase selesai, reset progres ke 0%
         if (_workers.Count == 0)
         {
             _awaitingNewCommand = false;
@@ -125,12 +119,15 @@ public class TreeInteractable : MonoBehaviour, IInteractable
         UpdateProgressVfx();
         _progress += _workers.GetShare(deltaTime);
 
-        if (_progress < GetCurrentDuration()) return;
+        if (_progress < GetCurrentDuration())
+        {
+            AudioManager.Instance.PlayTreeWorkTick(InteractionPoint);
+            return;
+        }
 
         _progress = 0f;
         _node.Data.SetStage(_node.Data.Stage + 1);
 
-        // Hentikan sesi saat ini agar Spirit kembali Idle dan menunggu klik untuk fase selanjutnya
         if (_stopAfterEachStage && !_node.Data.IsFullyGrown)
         {
             _awaitingNewCommand = true;
