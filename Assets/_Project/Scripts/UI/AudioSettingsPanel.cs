@@ -66,6 +66,7 @@ public sealed class AudioSettingsPanel : MonoBehaviour
     private void SetMusicVolume(float value)
     {
         if (_interactable && isActiveAndEnabled) GameAudioSettings.MusicVolume = value;
+        AudioManager.Instance.PlayUiSliderTick();
     }
 
     private void SetSfxVolume(float value)

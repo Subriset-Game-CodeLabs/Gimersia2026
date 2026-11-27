@@ -14,38 +14,328 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioLibrary
   menuBgm: {fileID: 0}
   menuBgmVolume: 0.75
+  dayBgm: {fileID: 0}
+  dayBgmVolume: 0.7
+  nightBgm: {fileID: 0}
+  nightBgmVolume: 0.75
+  islandAmbienceLoop: {fileID: 0}
+  islandAmbienceVolume: 0.3
   uiButtonHover:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fa539497c388f5847ba678650c07f053, type: 3}
     volume: 0.55
     pitchRange: {x: 0.98, y: 1.04}
     cooldown: 0.04
   uiButtonClick:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 64a69787efbf76947837c8da00b89dfe, type: 3}
     volume: 0.85
     pitchRange: {x: 0.96, y: 1.04}
     cooldown: 0
   uiStartGame:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: a14a0dae646f22d4bb13e619520266fb, type: 3}
     volume: 0.95
     pitchRange: {x: 1, y: 1}
     cooldown: 0
   uiPopupOpen:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fce11c0183478144aa8da12b6a1c84ff, type: 3}
     volume: 0.8
     pitchRange: {x: 0.98, y: 1.02}
     cooldown: 0
   uiPopupClose:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fce11c0183478144aa8da12b6a1c84ff, type: 3}
     volume: 0.75
     pitchRange: {x: 0.98, y: 1.02}
     cooldown: 0
   uiLevelNodeSelect:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f7228a429ec96fc4b940395c21b26d0b, type: 3}
     volume: 0.85
     pitchRange: {x: 0.95, y: 1.05}
     cooldown: 0
   uiSliderTick:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 86ea1525c1f46534ba4f0afdfaf85001, type: 3}
     volume: 0.75
     pitchRange: {x: 0.98, y: 1.05}
     cooldown: 0.08
+  uiActionBlocked:
+    clips:
+    - {fileID: 8300000, guid: 4f4d031e2a01280459012a8583d78f90, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.95, y: 1.02}
+    cooldown: 0.12
+  phaseDayStart:
+    clips:
+    - {fileID: 8300000, guid: 0971b6cf03afcf4409a0202b6b074068, type: 3}
+    volume: 0.85
+    pitchRange: {x: 0.98, y: 1.02}
+    cooldown: 0
+  phaseNightStart:
+    clips:
+    - {fileID: 8300000, guid: 6431f6d55a314034ab436149059738d0, type: 3}
+    volume: 0.9
+    pitchRange: {x: 0.98, y: 1.02}
+    cooldown: 0
+  nightCleared:
+    clips:
+    - {fileID: 8300000, guid: 530cdd5d9e160614fb59eadbdc71c00c, type: 3}
+    volume: 0.9
+    pitchRange: {x: 1, y: 1}
+    cooldown: 0
+  tileHover:
+    clips:
+    - {fileID: 8300000, guid: 4280d1a01182ab548b4a8c3fc2d35520, type: 3}
+    volume: 0.45
+    pitchRange: {x: 0.95, y: 1.08}
+    cooldown: 0.06
+  tileCommandClick:
+    clips:
+    - {fileID: 8300000, guid: c3f58e74088ddef4688759a46494b738, type: 3}
+    - {fileID: 8300000, guid: 6ad3ef5af40847640bbc079daf8fdcab, type: 3}
+    - {fileID: 8300000, guid: 2dab703e899d01040985d306b4b87854, type: 3}
+    volume: 0.8
+    pitchRange: {x: 0.94, y: 1.06}
+    cooldown: 0.05
+  blockCleaningTick:
+    clips:
+    - {fileID: 8300000, guid: cb0b9a7f28cd20b4fa7c0db387c65140, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.92, y: 1.08}
+    cooldown: 0.65
+  blockCleaned:
+    clips:
+    - {fileID: 8300000, guid: e56ee6544afab9348b89914d0beedee9, type: 3}
+    volume: 0.95
+    pitchRange: {x: 0.97, y: 1.03}
+    cooldown: 0
+  treeClick:
+    clips:
+    - {fileID: 8300000, guid: ee0c1366bedf7954c9c58643b5313d3e, type: 3}
+    - {fileID: 8300000, guid: 5170698cbafbdd2458d5ddee72aeb1d5, type: 3}
+    - {fileID: 8300000, guid: 15039bf5132299848b7de8b286c029df, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.95, y: 1.05}
+    cooldown: 0.08
+  treeWorkTick:
+    clips:
+    - {fileID: 8300000, guid: 251dbd26de3568143a4ab93bce7ff81c, type: 3}
+    - {fileID: 8300000, guid: 13df25b4203327f498f7c030cb96014b, type: 3}
+    - {fileID: 8300000, guid: 8fd53e8dc8c514046861bf34df65eb1d, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.94, y: 1.08}
+    cooldown: 0.65
+  treeHealTick:
+    clips:
+    - {fileID: 8300000, guid: e09cf40468122e94c91cf25c40c7933e, type: 3}
+    - {fileID: 8300000, guid: 2d8bc4aa5f6ecf840aa1048dcfc202e3, type: 3}
+    - {fileID: 8300000, guid: 2886f916a1986b34c8010547cc58a058, type: 3}
+    volume: 0.6
+    pitchRange: {x: 0.96, y: 1.06}
+    cooldown: 0.65
+  treeStageUp:
+    clips:
+    - {fileID: 8300000, guid: 6e125ecc5eaa1204e9c143f4ca5ab247, type: 3}
+    - {fileID: 8300000, guid: 36138fdb9e4c7a14ca450d40c2d4b562, type: 3}
+    volume: 0.95
+    pitchRange: {x: 0.98, y: 1.03}
+    cooldown: 0
+  treeElementFire:
+    clips:
+    - {fileID: 8300000, guid: fd4e514e0cbc022489a2a81f0ea2b567, type: 3}
+    - {fileID: 8300000, guid: ca0851ee822e41e46bd0a6e5561dcbaf, type: 3}
+    volume: 0.95
+    pitchRange: {x: 0.98, y: 1.02}
+    cooldown: 0
+  treeElementWater:
+    clips:
+    - {fileID: 8300000, guid: 421404c74a2ba8c42a4a8200d2287df4, type: 3}
+    - {fileID: 8300000, guid: 8abd5752cd62cda4e9394a5fc7893360, type: 3}
+    volume: 0.95
+    pitchRange: {x: 0.98, y: 1.02}
+    cooldown: 0
+  treeElementLightning:
+    clips:
+    - {fileID: 8300000, guid: 6ac421c4ff20c32419ded978779067f6, type: 3}
+    - {fileID: 8300000, guid: c330a1a63310a1140be3c98f83276983, type: 3}
+    volume: 0.95
+    pitchRange: {x: 0.98, y: 1.02}
+    cooldown: 0
+  treeHitByEnemy:
+    clips:
+    - {fileID: 8300000, guid: cbd27fa2e29708142878ef8736cfed11, type: 3}
+    - {fileID: 8300000, guid: 246e25d1ec78eb748a1c98c106762441, type: 3}
+    - {fileID: 8300000, guid: 2b42df06b98254c45b4c00b5bfb10084, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.9, y: 1.1}
+    cooldown: 0.16
+  treeStageDown:
+    clips:
+    - {fileID: 8300000, guid: 7cae4cdb058fc7c41824045d60370e25, type: 3}
+    - {fileID: 8300000, guid: fe4225059b5c381489bc77d4b9bc51b9, type: 3}
+    volume: 0.95
+    pitchRange: {x: 0.96, y: 1.02}
+    cooldown: 0
+  treeTurretFire:
+    clips:
+    - {fileID: 8300000, guid: 12e4ad6648414624fa2836ed4c0b4d1b, type: 3}
+    volume: 0.7
+    pitchRange: {x: 0.94, y: 1.06}
+    cooldown: 0.12
+  treeTurretWater:
+    clips:
+    - {fileID: 8300000, guid: e9b68d99ab9709446abe8c3b627d644a, type: 3}
+    volume: 0.7
+    pitchRange: {x: 0.94, y: 1.06}
+    cooldown: 0.12
+  treeTurretLightning:
+    clips:
+    - {fileID: 8300000, guid: 34c0fd0055c184044b9a8b254747025a, type: 3}
+    volume: 0.7
+    pitchRange: {x: 0.94, y: 1.06}
+    cooldown: 0.12
+  treeDowngradeShot:
+    clips:
+    - {fileID: 8300000, guid: db381b4b1ace771449311ad50f4e744d, type: 3}
+    volume: 0.9
+    pitchRange: {x: 0.97, y: 1.03}
+    cooldown: 0
+  spiritSelect:
+    clips:
+    - {fileID: 8300000, guid: a459bcea69a299f40b001410db8ab282, type: 3}
+    volume: 0.8
+    pitchRange: {x: 0.96, y: 1.06}
+    cooldown: 0.06
+  spiritDeselect:
+    clips:
+    - {fileID: 8300000, guid: 25ae5aab060a238439aca7a7da03e975, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.96, y: 1.02}
+    cooldown: 0.06
+  spiritCommandMove:
+    clips:
+    - {fileID: 8300000, guid: 3162f0bbc1a530146a116d3650000d6b, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.95, y: 1.06}
+    cooldown: 0.08
+  spiritCommandAttack:
+    clips:
+    - {fileID: 8300000, guid: fe2f3f583b763f043aafc0766cb81a32, type: 3}
+    volume: 0.85
+    pitchRange: {x: 0.96, y: 1.04}
+    cooldown: 0.08
+  spiritMoveStep:
+    clips:
+    - {fileID: 8300000, guid: dfe7682e6a98b81439fbefbf2f1973cc, type: 3}
+    volume: 0.35
+    pitchRange: {x: 0.9, y: 1.12}
+    cooldown: 0.36
+  spiritAttackFire:
+    clips:
+    - {fileID: 8300000, guid: 9d7aeb135b7b51a47962172843702792, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.94, y: 1.08}
+    cooldown: 0.08
+  spiritAttackWater:
+    clips:
+    - {fileID: 8300000, guid: 674854430a1ac0045873b171ebe1ac53, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.94, y: 1.08}
+    cooldown: 0.08
+  spiritAttackLightning:
+    clips:
+    - {fileID: 8300000, guid: 62e2606e99b907a4c8fe25779740342c, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.94, y: 1.08}
+    cooldown: 0.08
+  spiritSpecialAttack:
+    clips:
+    - {fileID: 8300000, guid: e328e2b402d70944489d9f589beb50ee, type: 3}
+    volume: 0.95
+    pitchRange: {x: 0.97, y: 1.03}
+    cooldown: 0.1
+  spiritProjectileHit:
+    clips:
+    - {fileID: 8300000, guid: 716bb2a79f5cffa498d9f13a8406385c, type: 3}
+    volume: 0.7
+    pitchRange: {x: 0.92, y: 1.1}
+    cooldown: 0.08
+  enemyHover:
+    clips:
+    - {fileID: 8300000, guid: 62db0f853499b3b499f78902e8ddd396, type: 3}
+    volume: 0.4
+    pitchRange: {x: 0.96, y: 1.06}
+    cooldown: 0.08
+  enemySpawnWater:
+    clips:
+    - {fileID: 8300000, guid: 1086a3a5ac0655846a3206a9474c0bf4, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.92, y: 1.08}
+    cooldown: 0.18
+  enemySpawnAir:
+    clips:
+    - {fileID: 8300000, guid: a16f064974e7b3a41a426e3b9ad53a30, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.92, y: 1.08}
+    cooldown: 0.18
+  enemyIslandJump:
+    clips:
+    - {fileID: 8300000, guid: 38c2bed34cf36a546adcfa6c1aa85701, type: 3}
+    volume: 0.8
+    pitchRange: {x: 0.94, y: 1.06}
+    cooldown: 0.15
+  enemyWormEmerge:
+    clips:
+    - {fileID: 8300000, guid: dc92cad130acea249a6a24f63b033bf7, type: 3}
+    volume: 0.85
+    pitchRange: {x: 0.93, y: 1.05}
+    cooldown: 0.2
+  enemyWormSubmerge:
+    clips:
+    - {fileID: 8300000, guid: 6df1b5755abd3e943b8b3718129cdb02, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.93, y: 1.05}
+    cooldown: 0.2
+  enemyAttackMelee:
+    clips:
+    - {fileID: 8300000, guid: 12029dee77c122c4a88342cb8d3fc45a, type: 3}
+    - {fileID: 8300000, guid: 573055f0da59bab4cb94eb323d582fd1, type: 3}
+    - {fileID: 8300000, guid: ddffa2e2fdbd7334c8451b9a2d6592e0, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.92, y: 1.08}
+    cooldown: 0.12
+  enemyAttackRanged:
+    clips:
+    - {fileID: 8300000, guid: 968f75a1d67314c4dbc08e31ffd89db3, type: 3}
+    - {fileID: 8300000, guid: 52bf2a25769cbf34ea496dca712e7df2, type: 3}
+    - {fileID: 8300000, guid: 99a766ff9f44fbb4c81a1064889f5bbe, type: 3}
+    volume: 0.75
+    pitchRange: {x: 0.94, y: 1.08}
+    cooldown: 0.12
+  enemyProjectileHit:
+    clips:
+    - {fileID: 8300000, guid: 755e73844900b904799a88c16452d147, type: 3}
+    - {fileID: 8300000, guid: 3ad8d65a177cbb84ca6d86b02e611f99, type: 3}
+    - {fileID: 8300000, guid: d7a1cd1b8a903664ab49178c582b6cce, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.92, y: 1.08}
+    cooldown: 0.12
+  enemyHit:
+    clips:
+    - {fileID: 8300000, guid: 48d2f3b1306cdad4c8e695b26eda5626, type: 3}
+    - {fileID: 8300000, guid: 982d9923186881740ae84e7127380ad8, type: 3}
+    - {fileID: 8300000, guid: 04b38ccef03b1b14787eee7bd484d039, type: 3}
+    volume: 0.65
+    pitchRange: {x: 0.9, y: 1.12}
+    cooldown: 0.14
+  enemyDeath:
+    clips:
+    - {fileID: 8300000, guid: 4e497ff5b3cf9764ea6b0600761006cd, type: 3}
+    - {fileID: 8300000, guid: 240397ce53a873749ad5ab4d00a03ba9, type: 3}
+    - {fileID: 8300000, guid: b92887d1bb2eaec4a97d35713b00dcc1, type: 3}
+    volume: 0.85
+    pitchRange: {x: 0.92, y: 1.06}
+    cooldown: 0.1
