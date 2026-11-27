@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -6,6 +7,20 @@ public class DayNightLighting : MonoBehaviour
     [SerializeField] private DayNightLightingSettings _settings;
     [SerializeField] private Light _sunLight;
     [SerializeField] private Camera _camera;
+
+    [Header("Daytime VFX")]
+    [Tooltip("Daftar objek VFX (parent prefab atau child ParticleSystem) yang hanya aktif saat siang hari.")]
+    [SerializeField] private List<GameObject> _dayVfxObjects = new List<GameObject>();
+
+    private struct CachedParticleSystem
+    {
+        public ParticleSystem system;
+        public float baseRateMultiplier;
+    }
+
+    private readonly List<CachedParticleSystem> _cachedVfxSystems = new List<CachedParticleSystem>();
+    private ParticleSystem.Particle[] _particleBuffer = new ParticleSystem.Particle[128];
+    private bool _isDayVfxActive;
 
     private PhaseManager _phases;
     private LightingPreset _target;
@@ -31,6 +46,8 @@ public class DayNightLighting : MonoBehaviour
 
         if (_camera == null) _camera = Camera.main;
         _phases = PhaseManager.Instance;
+
+        CacheDayVfx();
 
         // Trilight = Gradient Ambient (Sky, Equator, Ground)
         RenderSettings.ambientMode = AmbientMode.Trilight;
@@ -80,6 +97,16 @@ public class DayNightLighting : MonoBehaviour
 
         _target = target;
         _blend = 0f;
+
+        if (_target == _settings.Day)
+        {
+            ActivateDayVfxForTransition();
+        }
+        else if (_target == _settings.Night)
+        {
+            _isDayVfxActive = false;
+        }
+
         enabled = true;
     }
 
@@ -103,7 +130,16 @@ public class DayNightLighting : MonoBehaviour
         if (_camera != null)
             _camera.backgroundColor = Color.Lerp(_fromBackground, _target.BackgroundColor, t);
 
-        if (_blend >= 1f) enabled = false;
+        UpdateDayVfxTransition(t);
+
+        if (_blend >= 1f)
+        {
+            if (_target == _settings.Night)
+            {
+                SetDayVfxInstant(false);
+            }
+            enabled = false;
+        }
     }
 
     private void ApplyInstant(LightingPreset preset)
@@ -124,5 +160,148 @@ public class DayNightLighting : MonoBehaviour
 
         if (_camera != null)
             _camera.backgroundColor = preset.BackgroundColor;
+
+        SetDayVfxInstant(preset == _settings.Day);
+    }
+
+    private void CacheDayVfx()
+    {
+        _cachedVfxSystems.Clear();
+        int maxCapacity = 128;
+
+        for (int i = 0; i < _dayVfxObjects.Count; i++)
+        {
+            GameObject vfxObj = _dayVfxObjects[i];
+            if (vfxObj == null) continue;
+
+            ParticleSystem[] systems = vfxObj.GetComponentsInChildren<ParticleSystem>(true);
+            for (int j = 0; j < systems.Length; j++)
+            {
+                ParticleSystem ps = systems[j];
+                if (ps == null) continue;
+
+                _cachedVfxSystems.Add(new CachedParticleSystem
+                {
+                    system = ps,
+                    baseRateMultiplier = ps.emission.rateOverTimeMultiplier
+                });
+
+                if (ps.main.maxParticles > maxCapacity)
+                    maxCapacity = ps.main.maxParticles;
+            }
+        }
+
+        if (_particleBuffer.Length < maxCapacity)
+            _particleBuffer = new ParticleSystem.Particle[maxCapacity];
+    }
+
+    private void ActivateDayVfxForTransition()
+    {
+        for (int i = 0; i < _dayVfxObjects.Count; i++)
+        {
+            if (_dayVfxObjects[i] != null && !_dayVfxObjects[i].activeSelf)
+                _dayVfxObjects[i].SetActive(true);
+        }
+
+        for (int i = 0; i < _cachedVfxSystems.Count; i++)
+        {
+            ParticleSystem ps = _cachedVfxSystems[i].system;
+            if (ps == null) continue;
+
+            if (!_isDayVfxActive)
+            {
+                var emission = ps.emission;
+                emission.rateOverTimeMultiplier = 0f;
+            }
+
+            if (!ps.isPlaying)
+                ps.Play(true);
+        }
+    }
+
+    private void UpdateDayVfxTransition(float t)
+    {
+        if (_target == _settings.Day)
+        {
+            if (_isDayVfxActive) return;
+
+            for (int i = 0; i < _cachedVfxSystems.Count; i++)
+            {
+                CachedParticleSystem entry = _cachedVfxSystems[i];
+                if (entry.system == null) continue;
+
+                var emission = entry.system.emission;
+                emission.rateOverTimeMultiplier = Mathf.Lerp(0f, entry.baseRateMultiplier, t);
+            }
+
+            if (t >= 1f) _isDayVfxActive = true;
+        }
+        else if (_target == _settings.Night)
+        {
+            float remaining = 1f - t;
+            byte maxAlpha = (byte)Mathf.RoundToInt(255f * remaining);
+
+            for (int i = 0; i < _cachedVfxSystems.Count; i++)
+            {
+                CachedParticleSystem entry = _cachedVfxSystems[i];
+                ParticleSystem ps = entry.system;
+                if (ps == null) continue;
+
+                var emission = ps.emission;
+                emission.rateOverTimeMultiplier = entry.baseRateMultiplier * remaining;
+
+                int count = ps.GetParticles(_particleBuffer);
+                for (int p = 0; p < count; p++)
+                {
+                    Color32 color = _particleBuffer[p].startColor;
+                    if (color.a > maxAlpha)
+                    {
+                        color.a = maxAlpha;
+                        _particleBuffer[p].startColor = color;
+                    }
+                }
+                ps.SetParticles(_particleBuffer, count);
+            }
+        }
+    }
+
+    private void SetDayVfxInstant(bool active)
+    {
+        _isDayVfxActive = active;
+
+        if (active)
+        {
+            for (int i = 0; i < _dayVfxObjects.Count; i++)
+            {
+                if (_dayVfxObjects[i] != null)
+                    _dayVfxObjects[i].SetActive(true);
+            }
+
+            for (int i = 0; i < _cachedVfxSystems.Count; i++)
+            {
+                CachedParticleSystem entry = _cachedVfxSystems[i];
+                if (entry.system == null) continue;
+
+                var emission = entry.system.emission;
+                emission.rateOverTimeMultiplier = entry.baseRateMultiplier;
+                entry.system.Play(true);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < _cachedVfxSystems.Count; i++)
+            {
+                ParticleSystem ps = _cachedVfxSystems[i].system;
+                if (ps == null) continue;
+
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+
+            for (int i = 0; i < _dayVfxObjects.Count; i++)
+            {
+                if (_dayVfxObjects[i] != null)
+                    _dayVfxObjects[i].SetActive(false);
+            }
+        }
     }
 }

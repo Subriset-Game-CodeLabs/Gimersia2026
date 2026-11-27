@@ -111,6 +111,7 @@ GameObject:
   - component: {fileID: 7626608388747191610}
   - component: {fileID: 4250336686463696184}
   - component: {fileID: 1245364605471703462}
+  - component: {fileID: 2226724487553266134}
   m_Layer: 0
   m_Name: Block bottom left
   m_TagString: Untagged
@@ -192,6 +193,54 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridInteractable
   _cleanDuration: 3
+--- !u!114 &2226724487553266134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2536272469460299789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b1fbf2ecaf3c6446b01e12368d67865, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlockGroundDetailSpawner
+  _grassPrefabs:
+  - {fileID: 919132149155446097, guid: 80be6213523682045b8e750ceca8fe6a, type: 3}
+  - {fileID: 919132149155446097, guid: 124d723a95562ce4b8bc7d3241fd649e, type: 3}
+  - {fileID: 919132149155446097, guid: 9dad91e89fe091e46897cbeb12baf4b9, type: 3}
+  _flowerPrefabs:
+  - {fileID: 919132149155446097, guid: 5a18ea6aea3c648419e7450d7598f57b, type: 3}
+  - {fileID: 919132149155446097, guid: fdc53cce632e5644eb21f24908272bfc, type: 3}
+  - {fileID: 919132149155446097, guid: f3723646c4297574a99fff2a550f9641, type: 3}
+  _rockPrefabs:
+  - {fileID: 919132149155446097, guid: 4283b293c20d04545a3e51e393232c6d, type: 3}
+  - {fileID: 919132149155446097, guid: 42aff3b77dfa2904da110736ba23dfb8, type: 3}
+  - {fileID: 919132149155446097, guid: 472f29aeab9ac57478dfdf7f4fb0f191, type: 3}
+  _detailingContainer: {fileID: 0}
+  _blockTileRoot: {fileID: 7663240584702524302}
+  _cleaningPoint: {fileID: 6903983694123310136}
+  _dirtyVisualsRoot: {fileID: 5138594901289843604}
+  _clustersPerBlock: {x: 3, y: 5}
+  _itemsPerCluster: {x: 3, y: 5}
+  _clusterRadius: 0.55
+  _minPropSpacing: 0.38
+  _grassSpacingMultiplier: 0.85
+  _grassWeight: 68
+  _flowerWeight: 22
+  _rockWeight: 10
+  _maxRocksPerBlock: 1
+  _rockBodyRadius: 0.55
+  _minRockSpacing: 1.25
+  _centerClearRadius: 0.45
+  _edgeSafetyMargin: 0.45
+  _flowerAndRockEdgeMargin: 2.9
+  _scaleRange: {x: 0.8, y: 1.12}
+  _rockScaleRange: {x: 0.75, y: 1}
+  _maxTiltAngle: 4
+  _surfaceYOffset: 0
+  _spawnOnStart: 1
+  _hideWhenDirty: 1
 --- !u!1 &5138594901289843604
 GameObject:
   m_ObjectHideFlags: 0

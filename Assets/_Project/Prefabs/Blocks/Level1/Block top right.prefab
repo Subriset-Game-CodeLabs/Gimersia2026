@@ -47,40 +47,6 @@ Transform:
   - {fileID: 5527459693906249538}
   m_Father: {fileID: 7626608388747191610}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1389160001608061736
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6508672500437268509}
-  m_Layer: 0
-  m_Name: Slots
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6508672500437268509
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1389160001608061736}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 3721997689655752827}
-  - {fileID: 4899670583034546891}
-  - {fileID: 7411305576893158373}
-  m_Father: {fileID: 7626608388747191610}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2208191615762183947
 GameObject:
   m_ObjectHideFlags: 0
@@ -177,6 +143,7 @@ GameObject:
   - component: {fileID: 7626608388747191610}
   - component: {fileID: 4250336686463696184}
   - component: {fileID: 1245364605471703462}
+  - component: {fileID: 6230149456450652825}
   m_Layer: 0
   m_Name: Block top right
   m_TagString: Untagged
@@ -199,7 +166,6 @@ Transform:
   m_Children:
   - {fileID: 939539813962864302}
   - {fileID: 7663240584702524302}
-  - {fileID: 6508672500437268509}
   - {fileID: 5003431853578768262}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -275,37 +241,54 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridInteractable
   _cleanDuration: 3
---- !u!1 &3378875614642922341
-GameObject:
+--- !u!114 &6230149456450652825
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3721997689655752827}
-  m_Layer: 0
-  m_Name: Slot_01
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3721997689655752827
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3378875614642922341}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3, y: 0, z: -2.14}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6508672500437268509}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_GameObject: {fileID: 2536272469460299789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b1fbf2ecaf3c6446b01e12368d67865, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlockGroundDetailSpawner
+  _grassPrefabs:
+  - {fileID: 919132149155446097, guid: 80be6213523682045b8e750ceca8fe6a, type: 3}
+  - {fileID: 919132149155446097, guid: 124d723a95562ce4b8bc7d3241fd649e, type: 3}
+  - {fileID: 919132149155446097, guid: 9dad91e89fe091e46897cbeb12baf4b9, type: 3}
+  _flowerPrefabs:
+  - {fileID: 919132149155446097, guid: 5a18ea6aea3c648419e7450d7598f57b, type: 3}
+  - {fileID: 919132149155446097, guid: fdc53cce632e5644eb21f24908272bfc, type: 3}
+  - {fileID: 919132149155446097, guid: f3723646c4297574a99fff2a550f9641, type: 3}
+  _rockPrefabs:
+  - {fileID: 919132149155446097, guid: 4283b293c20d04545a3e51e393232c6d, type: 3}
+  - {fileID: 919132149155446097, guid: 42aff3b77dfa2904da110736ba23dfb8, type: 3}
+  - {fileID: 919132149155446097, guid: 472f29aeab9ac57478dfdf7f4fb0f191, type: 3}
+  _detailingContainer: {fileID: 0}
+  _blockTileRoot: {fileID: 7663240584702524302}
+  _cleaningPoint: {fileID: 5003431853578768262}
+  _dirtyVisualsRoot: {fileID: 14666821050520248}
+  _clustersPerBlock: {x: 3, y: 5}
+  _itemsPerCluster: {x: 3, y: 5}
+  _clusterRadius: 0.55
+  _minPropSpacing: 0.38
+  _grassSpacingMultiplier: 0.85
+  _grassWeight: 68
+  _flowerWeight: 22
+  _rockWeight: 10
+  _maxRocksPerBlock: 1
+  _rockBodyRadius: 0.55
+  _minRockSpacing: 1.25
+  _centerClearRadius: 0.45
+  _edgeSafetyMargin: 0.45
+  _flowerAndRockEdgeMargin: 2.9
+  _scaleRange: {x: 0.8, y: 1.12}
+  _rockScaleRange: {x: 0.75, y: 1}
+  _maxTiltAngle: 4
+  _surfaceYOffset: 0
+  _spawnOnStart: 1
+  _hideWhenDirty: 1
 --- !u!1 &4085467993653009989
 GameObject:
   m_ObjectHideFlags: 0
@@ -336,68 +319,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7626608388747191610}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5566733598492151344
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4899670583034546891}
-  m_Layer: 0
-  m_Name: Slot_02
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4899670583034546891
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5566733598492151344}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.25, y: 0, z: -3.96}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6508672500437268509}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5739131329071321219
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7411305576893158373}
-  m_Layer: 0
-  m_Name: Slot_03
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7411305576893158373
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5739131329071321219}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.04, y: 0, z: -7.75}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6508672500437268509}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &375793939683773411
 PrefabInstance:
