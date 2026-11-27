@@ -28,7 +28,22 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
 
         [Header(Spirit Occluder Cutout)]
         [Toggle] _EnableOccluderCutout ("Enable Spirit See-Through Cutout", Float) = 0
-       
+
+        [Header(Wind Sway (Vegetation))]
+        [Toggle(_ENABLE_WIND)] _EnableWind ("Enable Wind Sway", Float) = 0
+        _MBDefaultBending ("MB Default Bending", Float) = 0
+        _MBAmplitude ("MB Amplitude", Float) = 1.5
+        _MBAmplitudeOffset ("MB Amplitude Offset", Float) = 2.0
+        _MBFrequency ("MB Frequency", Float) = 1.11
+        _MBFrequencyOffset ("MB Frequency Offset", Float) = 0.0
+        _MBPhase ("MB Phase", Float) = 1.0
+        _MBWindDir ("MB Wind Dir", Range(0, 360)) = 0
+        _MBWindDirOffset ("MB Wind Dir Offset", Range(0, 180)) = 20
+        _MBMaxHeight ("MB Max Height", Float) = 3.5
+        [NoScaleOffset] _NoiseTexture ("Wind Noise Texture", 2D) = "bump" {}
+        _NoiseTextureTilling ("Noise Tilling - Static (XY), Animated (ZW)", Vector) = (0.25, 0.25, 0.25, 0.25)
+        _NoisePannerSpeed ("Noise Panner Speed", Vector) = (0.05, 0.03, 0, 0)
+
         [Header(Stencil)]
         _Stencil ("Stencil ID [0;255]", Float) = 0
         _ReadMask ("ReadMask [0;255]", Int) = 255
@@ -37,7 +52,7 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
         [Enum(UnityEngine.Rendering.StencilOp)] _StencilOp ("Stencil Operation", Int) = 0
         [Enum(UnityEngine.Rendering.StencilOp)] _StencilFail ("Stencil Fail", Int) = 0
         [Enum(UnityEngine.Rendering.StencilOp)] _StencilZFail ("Stencil ZFail", Int) = 0
-       
+
         [Header(Rendering)]
         _Offset("Offset", float) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Culling ("Cull Mode", Int) = 2
@@ -45,14 +60,14 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
         [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest ("ZTest", Int) = 4
         [Enum(None,0,Alpha,1,Red,8,Green,4,Blue,2,RGB,14,RGBA,15)] _ColorMask("Color Mask", Int) = 15
     }
-   
+
     SubShader
     {
-        Tags 
-        { 
-            "RenderType" = "Opaque" 
-            "RenderPipeline" = "UniversalPipeline" 
-            "Queue" = "Geometry" 
+        Tags
+        {
+            "RenderType" = "Opaque"
+            "RenderPipeline" = "UniversalPipeline"
+            "Queue" = "Geometry"
         }
 
         Stencil
@@ -73,6 +88,9 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
         TEXTURE2D(_MainTex);
         SAMPLER(sampler_MainTex);
 
+        TEXTURE2D(_NoiseTexture);
+        SAMPLER(sampler_NoiseTexture);
+
         CBUFFER_START(UnityPerMaterial)
             float4 _MainTex_ST;
             half4 _Color;
@@ -88,12 +106,96 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             half4 _OutlineColor;
             float _OutlineWidth;
             float _EnableOccluderCutout;
+
+            // Wind Sway Properties (SRP Batcher Compatible)
+            float _EnableWind;
+            float _MBDefaultBending;
+            float _MBAmplitude;
+            float _MBAmplitudeOffset;
+            float _MBFrequency;
+            float _MBFrequencyOffset;
+            float _MBPhase;
+            float _MBWindDir;
+            float _MBWindDirOffset;
+            float _MBMaxHeight;
+            float4 _NoiseTextureTilling;
+            float2 _NoisePannerSpeed;
         CBUFFER_END
 
-        // Variabel global yang dikirim oleh SpiritOcclusionController.cs
+        // Variabel global dari SpiritOcclusionController.cs
         float4 _SpiritCutoutBottoms[3];
         float4 _SpiritCutoutTops[3];
         float _SpiritCutoutRadii[3];
+
+        // Variabel global dari GlobalWindController.cs (0 = Aktif/Siang, 1 = Berhenti/Malam)
+        float _GlobalWindStop;
+
+        // --- FUNGSI ROTASI & WIND BENDING ---
+        float3 RotateAroundAxis(float3 center, float3 original, float3 u, float angle)
+        {
+            original -= center;
+            float C = cos(angle);
+            float S = sin(angle);
+            float t = 1.0 - C;
+            float m00 = t * u.x * u.x + C;
+            float m01 = t * u.x * u.y - S * u.z;
+            float m02 = t * u.x * u.z + S * u.y;
+            float m10 = t * u.x * u.y + S * u.z;
+            float m11 = t * u.y * u.y + C;
+            float m12 = t * u.y * u.z - S * u.x;
+            float m20 = t * u.x * u.z - S * u.y;
+            float m21 = t * u.y * u.z + S * u.x;
+            float m22 = t * u.z * u.z + C;
+            float3x3 finalMatrix = float3x3(m00, m01, m02, m10, m11, m12, m20, m21, m22);
+            return mul(finalMatrix, original) + center;
+        }
+
+        float3 ApplyVegetationWindOS(float3 positionOS)
+        {
+            #if defined(_ENABLE_WIND)
+                float windActive = 1.0 - saturate(_GlobalWindStop);
+                if (windActive <= 0.0001)
+                    return positionOS;
+
+                // 1. Posisi pivot objek di World Space (XZ)
+                float3 objOriginWS = mul(GetObjectToWorldMatrix(), float4(0.0, 0.0, 0.0, 1.0)).xyz;
+                float2 worldSpaceUVs = objOriginWS.xz;
+
+                // 2. Animated World Noise untuk variasi arah embusan angin
+                float2 animatedTilling = _NoiseTextureTilling.zw;
+                float2 panner = 0.1 * _Time.y * _NoisePannerSpeed;
+                float animatedNoiseR = SAMPLE_TEXTURE2D_LOD(_NoiseTexture, sampler_NoiseTexture, (worldSpaceUVs * animatedTilling) + panner, 0.0).r;
+                float remappedAnimNoise = -1.0 + animatedNoiseR * 2.0;
+
+                // 3. Sumbu rotasi angin (World Space -> Object Space)
+                float windDirRad = radians((_MBWindDir + (_MBWindDirOffset * remappedAnimNoise)) * -1.0);
+                float3 windAxisWS = float3(cos(windDirRad), 0.0, sin(windDirRad));
+                float3 worldToObjDir = mul(GetWorldToObjectMatrix(), float4(windAxisWS, 1.0)).xyz;
+                float3 worldToObjZero = mul(GetWorldToObjectMatrix(), float4(0.0, 0.0, 0.0, 1.0)).xyz;
+                float3 windAxisOS = normalize(worldToObjDir - worldToObjZero + float3(1e-5, 0.0, 0.0));
+
+                // 4. Static World Noise untuk variasi amplitudo & frekuensi antar objek
+                float2 staticTilling = _NoiseTextureTilling.xy;
+                float staticNoiseR = SAMPLE_TEXTURE2D_LOD(_NoiseTexture, sampler_NoiseTexture, worldSpaceUVs * staticTilling, 0.0).r;
+
+                // 5. Kalkulasi sudut ayunan (dikali windActive agar mereda & berhenti total saat malam)
+                float amplitude = (_MBAmplitude + (_MBAmplitudeOffset * staticNoiseR)) * windActive;
+                float frequency = _MBFrequency + (_MBFrequencyOffset * staticNoiseR);
+                float wave = sin(((objOriginWS.x + objOriginWS.z) + (_TimeParameters.x * frequency)) * _MBPhase);
+                float safeMaxHeight = max(0.0001, _MBMaxHeight);
+                float angleRad = radians(((amplitude * wave) + (_MBDefaultBending * windActive)) * (positionOS.y / safeMaxHeight));
+
+                // 6. Double-pivot rotation agar batang melengkung halus & akar tetap menempel tanah
+                float3 rotatedSpine = RotateAroundAxis(float3(0.0, positionOS.y, 0.0), positionOS, windAxisOS, angleRad);
+                float3 rotatedFinal = RotateAroundAxis(float3(0.0, 0.0, 0.0), rotatedSpine, windAxisOS, angleRad);
+
+                float3 windOffset = (rotatedFinal - positionOS) * step(0.01, positionOS.y);
+                return positionOS + windOffset;
+            #else
+                return positionOS;
+            #endif
+        }
+        // ------------------------------------
 
         float DistanceToSegment(float3 p, float3 a, float3 b)
         {
@@ -183,22 +285,23 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             float localY : TEXCOORD3;
         };
         ENDHLSL
-       
-        // Pass 1: Main Toon + Additional Point Lights + Fake AO + Rim Light + Spirit Cutout
+
+        // Pass 1: Main Toon + Additional Point Lights + Fake AO + Rim Light + Spirit Cutout + Wind
         Pass
         {
             Name "UniversalForward"
             Tags { "LightMode" = "UniversalForward" }
-            
+
             Cull [_Culling]
             Offset [_Offset], [_Offset]
             ZWrite [_ZWrite]
             ZTest [_ZTest]
             ColorMask [_ColorMask]
-           
+
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma shader_feature_local_vertex _ENABLE_WIND
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
@@ -206,11 +309,14 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             Varyings vert(Attributes input)
             {
                 Varyings output;
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                float rawLocalY = input.positionOS.y;
+                float3 displacedPosOS = ApplyVegetationWindOS(input.positionOS.xyz);
+
+                output.positionCS = TransformObjectToHClip(displacedPosOS);
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex);
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-                output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                output.localY = input.positionOS.y;
+                output.positionWS = TransformObjectToWorld(displacedPosOS);
+                output.localY = rawLocalY;
                 return output;
             }
 
@@ -279,12 +385,12 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             ENDHLSL
         }
 
-        // Pass 2: Inverted Hull Outline + Spirit Cutout
+        // Pass 2: Inverted Hull Outline + Spirit Cutout + Wind
         Pass
         {
             Name "OutlinePass"
             Tags { "LightMode" = "SRPDefaultUnlit" }
-            
+
             Cull Front
             ZWrite On
             ZTest [_ZTest]
@@ -293,11 +399,14 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             HLSLPROGRAM
             #pragma vertex vertOutline
             #pragma fragment fragOutline
+            #pragma shader_feature_local_vertex _ENABLE_WIND
 
             Varyings vertOutline(Attributes input)
             {
                 Varyings output;
-                float3 extrudedPos = input.positionOS.xyz + normalize(input.normalOS) * _OutlineWidth;
+                float3 displacedPosOS = ApplyVegetationWindOS(input.positionOS.xyz);
+                float3 extrudedPos = displacedPosOS + normalize(input.normalOS) * _OutlineWidth;
+
                 output.positionCS = TransformObjectToHClip(extrudedPos);
                 output.uv = input.uv;
                 output.normalWS = float3(0, 0, 0);
@@ -313,14 +422,144 @@ Shader "Supyrb/Toon/IsometricDioramaURP"
             }
             ENDHLSL
         }
-       
-        // Pass 3: Shadow Caster bawaan URP
-        UsePass "Universal Render Pipeline/Lit/ShadowCaster"
 
-        // Pass 4: Depth Only agar objek tercatat di _CameraDepthTexture (memicu busa air)
-        UsePass "Universal Render Pipeline/Lit/DepthOnly"
+        // Pass 3: Shadow Caster (Ikut bergoyang sesuai angin)
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode" = "ShadowCaster" }
 
-        // Pass 5: Depth Normals agar arah permukaan objek tercatat di _CameraNormalsTexture
-        UsePass "Universal Render Pipeline/Lit/DepthNormals"
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull [_Culling]
+
+            HLSLPROGRAM
+            #pragma vertex vertShadow
+            #pragma fragment fragShadow
+            #pragma shader_feature_local_vertex _ENABLE_WIND
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            float3 _LightDirection;
+            float3 _LightPosition;
+
+            struct ShadowVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD0;
+            };
+
+            ShadowVaryings vertShadow(Attributes input)
+            {
+                ShadowVaryings output;
+                float3 displacedPosOS = ApplyVegetationWindOS(input.positionOS.xyz);
+                float3 positionWS = TransformObjectToWorld(displacedPosOS);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+
+                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                    float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+                #else
+                    float3 lightDirectionWS = _LightDirection;
+                #endif
+
+                float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
+                #if UNITY_REVERSED_Z
+                    positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
+                #else
+                    positionCS.z = max(positionCS.z, UNITY_NEAR_CLIP_VALUE);
+                #endif
+
+                output.positionCS = positionCS;
+                output.positionWS = positionWS;
+                return output;
+            }
+
+            half4 fragShadow(ShadowVaryings input) : SV_Target
+            {
+                ApplySpiritOccluderCutout(input.positionWS, input.positionCS.xy);
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        // Pass 4: Depth Only (Untuk _CameraDepthTexture & efek busa air)
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
+
+            ZWrite On
+            ColorMask R
+            Cull [_Culling]
+
+            HLSLPROGRAM
+            #pragma vertex vertDepth
+            #pragma fragment fragDepth
+            #pragma shader_feature_local_vertex _ENABLE_WIND
+
+            struct DepthVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD0;
+            };
+
+            DepthVaryings vertDepth(Attributes input)
+            {
+                DepthVaryings output;
+                float3 displacedPosOS = ApplyVegetationWindOS(input.positionOS.xyz);
+                output.positionCS = TransformObjectToHClip(displacedPosOS);
+                output.positionWS = TransformObjectToWorld(displacedPosOS);
+                return output;
+            }
+
+            half4 fragDepth(DepthVaryings input) : SV_Target
+            {
+                ApplySpiritOccluderCutout(input.positionWS, input.positionCS.xy);
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        // Pass 5: Depth Normals (Untuk _CameraNormalsTexture)
+        Pass
+        {
+            Name "DepthNormals"
+            Tags { "LightMode" = "DepthNormals" }
+
+            ZWrite On
+            Cull [_Culling]
+
+            HLSLPROGRAM
+            #pragma vertex vertDepthNormals
+            #pragma fragment fragDepthNormals
+            #pragma shader_feature_local_vertex _ENABLE_WIND
+
+            struct DepthNormalsVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 normalWS : TEXCOORD0;
+                float3 positionWS : TEXCOORD1;
+            };
+
+            DepthNormalsVaryings vertDepthNormals(Attributes input)
+            {
+                DepthNormalsVaryings output;
+                float3 displacedPosOS = ApplyVegetationWindOS(input.positionOS.xyz);
+                output.positionCS = TransformObjectToHClip(displacedPosOS);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.positionWS = TransformObjectToWorld(displacedPosOS);
+                return output;
+            }
+
+            half4 fragDepthNormals(DepthNormalsVaryings input) : SV_Target
+            {
+                ApplySpiritOccluderCutout(input.positionWS, input.positionCS.xy);
+                float3 normalWS = normalize(input.normalWS);
+                return half4(normalWS, 0.0);
+            }
+            ENDHLSL
+        }
     }
 }

@@ -24,7 +24,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 6be2e662537a3814683deb96843998de, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _ENABLE_WIND
   m_InvalidKeywords:
   - _ENABLEOCCLUDERCUTOUT_ON
   m_LightmapFlags: 4
@@ -68,6 +69,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTexture:
+        m_Texture: {fileID: 2800000, guid: 325d48ff66bae3245b768b66049c7718, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -114,12 +119,22 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnableOccluderCutout: 1
+    - _EnableWind: 1
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _GradientMaxY: 1.5
     - _GradientMinY: 0
+    - _MBAmplitude: 1.5
+    - _MBAmplitudeOffset: 2
+    - _MBDefaultBending: 0
+    - _MBFrequency: 1.11
+    - _MBFrequencyOffset: 0
+    - _MBMaxHeight: 3.5
+    - _MBPhase: 1
+    - _MBWindDir: 0
+    - _MBWindDirOffset: 20
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Offset: 0
@@ -152,6 +167,8 @@ Material:
     - _Color: {r: 0.9924528, g: 0.096267864, b: 0.096267864, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GradientBottomColor: {r: 0.54999995, g: 0.6, b: 0.75, a: 1}
+    - _NoisePannerSpeed: {r: 0.05, g: 0.03, b: 0, a: 0}
+    - _NoiseTextureTilling: {r: 0.25, g: 0.25, b: 0.25, a: 0.25}
     - _OutlineColor: {r: 0.14999998, g: 0.14999998, b: 0.19999996, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 0}
     - _ShadowColor: {r: 0.65, g: 0.7, b: 0.85, a: 1}
