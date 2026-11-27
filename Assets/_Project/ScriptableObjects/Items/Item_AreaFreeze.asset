@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_AreaFreeze
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   _id: area_freeze
-  _title: Area Freeze
-  _description: bekuin musuh
-  _icon: {fileID: 0}
+  _title: Frost Crystal
+  _description: Freezes enemies in the area. They cannot move or attack for a while.
+  _icon: {fileID: 21300000, guid: d9730e2c817e8604c9d7175c87b728ce, type: 3}
   _effect: 1
   _radius: 3
   _damage: 10

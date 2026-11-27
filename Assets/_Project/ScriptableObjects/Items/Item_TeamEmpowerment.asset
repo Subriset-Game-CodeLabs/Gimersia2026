@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_TeamEmpowerment
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   _id: team_empowerment
-  _title: Team Empowerment
-  _description: Increase all spirits damage
-  _icon: {fileID: 0}
+  _title: Unity Charm
+  _description: Spirit damage becomes charm value x current element power.
+  _icon: {fileID: 21300000, guid: 1f260a5df57e84348b0683c4308ff332, type: 3}
   _effect: 5
   _radius: 3
   _damage: 10

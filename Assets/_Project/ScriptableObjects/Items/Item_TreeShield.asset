@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_TreeShield
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   _id: tree_shield
-  _title: Tree Shield
-  _description: 'give tree invulnerability '
-  _icon: {fileID: 0}
+  _title: Leaf Shield
+  _description: A leaf dome makes every tree inside the circle immune to attacks.
+  _icon: {fileID: 21300000, guid: f758d0de1eb39be4cb3c1d872a274b64, type: 3}
   _effect: 3
   _radius: 3
   _damage: 10
