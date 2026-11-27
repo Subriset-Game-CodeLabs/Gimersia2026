@@ -16,7 +16,9 @@ MonoBehaviour:
   _title: Deep Roots
   _description: "Strengthen every tree\u2019s maximum health and immediately heal
     living, revealed trees."
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 91b7b1c007a8e434b8273157d663bd27, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 834ad3e3e924e0942b34754648aeb6a8, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: e2d36cd131842924dad69c51ce6a5777, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 382f910dd8def25419510c4dbc65bcd9, type: 2}

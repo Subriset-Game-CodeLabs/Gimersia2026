@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: thick_bark
   _title: Thick Bark
   _description: All trees take less damage from enemy attacks.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: d9cd60f98429b0f44bf9a567bdc4fc79, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 4c9e0ce3c7470544393c5d585f66d2ad, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: 71f8759958c138347874b9b86afd0a58, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 382f910dd8def25419510c4dbc65bcd9, type: 2}

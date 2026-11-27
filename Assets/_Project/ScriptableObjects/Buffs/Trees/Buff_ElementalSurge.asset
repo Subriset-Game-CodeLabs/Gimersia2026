@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: elemental_surge
   _title: Elemental Surge
   _description: Elemental trees fire more powerful projectiles.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 7069bb33fa199fb4bb6a4140403a0871, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 2edec24304bc8694ab7498347772098f, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: 906d5e65de385024da9804afb815ba90, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 382f910dd8def25419510c4dbc65bcd9, type: 2}

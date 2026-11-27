@@ -23,6 +23,8 @@ public class UIStateButton : UIBehaviour,
     [SerializeField] private Sprite _disabledSprite;
 
     [Header("Tactile Feel")]
+    [Tooltip("Label offset for hover/keyboard focus when the hover art's button face is off-center.")]
+    [SerializeField] private Vector2 _hoverContentOffset = Vector2.zero;
     [SerializeField] private Vector2 _pressedContentOffset = new Vector2(0f, -4f);
     [SerializeField] private Color _disabledTint = new Color(0.7f, 0.7f, 0.7f, 0.85f);
 
@@ -168,6 +170,7 @@ public class UIStateButton : UIBehaviour,
         Sprite sprite;
         Color tint = Color.white;
         bool pressed = false;
+        bool hovered = false;
 
         if (!interactable)
         {
@@ -182,6 +185,7 @@ public class UIStateButton : UIBehaviour,
         else if (_isHovered || _isSelected)
         {
             sprite = _hoverSprite != null ? _hoverSprite : _defaultSprite;
+            hovered = _hoverSprite != null;
         }
         else
         {
@@ -212,7 +216,8 @@ public class UIStateButton : UIBehaviour,
 
         if (_content != null && _contentRestCaptured)
         {
-            _content.anchoredPosition = pressed ? _contentRestPos + _pressedContentOffset : _contentRestPos;
+            Vector2 offset = pressed ? _pressedContentOffset : hovered ? _hoverContentOffset : Vector2.zero;
+            _content.anchoredPosition = _contentRestPos + offset;
         }
     }
 }

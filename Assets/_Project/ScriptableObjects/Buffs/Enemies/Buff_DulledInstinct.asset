@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: dulled_instinct
   _title: Dulled Instinct
   _description: Enemies are less likely to use special attacks.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 056b160c146b7db4893c06e30e86fef9, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 54484374612ff164c9371ab1db43b77e, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: 164063af5be6a8449930326500f569e0, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 0ddeec9123a4b2445b06942e1cbc8bd5, type: 2}

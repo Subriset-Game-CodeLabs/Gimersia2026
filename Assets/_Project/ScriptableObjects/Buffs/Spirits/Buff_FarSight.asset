@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: far_sight
   _title: Far Sight
   _description: All Spirits can attack enemies from farther away.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 8494b3600c152184295d277a3ef00347, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: f70b314545b847e4c9ce5196f611649d, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: c1360c2312997b64a8573a3a43bc7aac, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 392656b88c32abe469fa49cc783a356e, type: 2}

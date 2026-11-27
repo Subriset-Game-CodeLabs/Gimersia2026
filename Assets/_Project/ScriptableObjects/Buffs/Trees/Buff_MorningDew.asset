@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: morning_dew
   _title: Morning Dew
   _description: Living, revealed trees recover health at the start of each day.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 6485eadc2d418ee4aa205c2c24c31030, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 68be7208a8508a844831153e6c3257a3, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: 5091f544befd6bf46b60ada5bcbe619f, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 382f910dd8def25419510c4dbc65bcd9, type: 2}

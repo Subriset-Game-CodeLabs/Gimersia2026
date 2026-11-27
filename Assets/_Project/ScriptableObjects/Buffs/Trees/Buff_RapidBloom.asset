@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: rapid_bloom
   _title: Rapid Bloom
   _description: Elemental trees fire their projectiles more frequently.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 0d090a717db6b354a810673bbaaddb99, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 9248b77979541db45b9b924bde1891d1, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: f0020c71a66d9b8479a05265c91d7f3a, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 382f910dd8def25419510c4dbc65bcd9, type: 2}

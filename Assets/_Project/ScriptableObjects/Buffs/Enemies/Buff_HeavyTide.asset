@@ -15,11 +15,13 @@ MonoBehaviour:
   _id: heavy_tide
   _title: Heavy Tide
   _description: Enemies move more slowly through sea, land, and air.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: c49eb8678003d374d8505878f68c1f88, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: b31229a64cf8c2244949001bfd202cdd, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: f26c23c30f174bc489135b35c3a37a39, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 0ddeec9123a4b2445b06942e1cbc8bd5, type: 2}
-  _effectStripTemplate: -{amount}% ENEMY MOVE SPEED
+  _effectStripTemplate: -{amount}% ENEMY SPEED
   _effects:
   - _type: 12
     _amount: 0.06

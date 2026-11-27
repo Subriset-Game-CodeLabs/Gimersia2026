@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Selectable))]
-public class UIButtonAudio : MonoBehaviour, IPointerEnterHandler, ISelectHandler, IPointerClickHandler, ISubmitHandler
+public class UIButtonAudio : MonoBehaviour, IPointerEnterHandler, ISelectHandler, IPointerDownHandler, IPointerClickHandler, ISubmitHandler
 {
     public enum ClickSoundType
     {
@@ -15,6 +15,7 @@ public class UIButtonAudio : MonoBehaviour, IPointerEnterHandler, ISelectHandler
 
     [SerializeField] private bool _playHoverSound = true;
     [SerializeField] private ClickSoundType _clickSound = ClickSoundType.StandardClick;
+    [SerializeField] private bool _playClickOnPress = false;
 
     private Selectable _selectable;
 
@@ -42,9 +43,15 @@ public class UIButtonAudio : MonoBehaviour, IPointerEnterHandler, ISelectHandler
         if (_playHoverSound) AudioManager.Instance.PlayUiHover();
     }
 
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (!_playClickOnPress || !CanPlay() || eventData.button != PointerEventData.InputButton.Left) return;
+        TriggerClickSound();
+    }
+
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (!CanPlay() || eventData.button != PointerEventData.InputButton.Left) return;
+        if (_playClickOnPress || !CanPlay() || eventData.button != PointerEventData.InputButton.Left) return;
         TriggerClickSound();
     }
 
@@ -56,7 +63,8 @@ public class UIButtonAudio : MonoBehaviour, IPointerEnterHandler, ISelectHandler
 
     private bool CanPlay()
     {
-        return _selectable != null && _selectable.IsActive() && _selectable.IsInteractable();
+        return _selectable != null && _selectable.IsActive() && _selectable.IsInteractable()
+            && AudioManager.Instance != null;
     }
 
     private void TriggerClickSound()

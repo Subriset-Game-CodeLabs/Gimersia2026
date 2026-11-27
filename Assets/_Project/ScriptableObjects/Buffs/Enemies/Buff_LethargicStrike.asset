@@ -15,11 +15,13 @@ MonoBehaviour:
   _id: lethargic_strike
   _title: Lethargic Strike
   _description: Enemies attack less frequently.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 2d7c25edfd848f744ae3f9422c5cae08, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 34931cc6431e9914f82298565f371111, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: 4d4efdaec30910c458f3f33ea94739d1, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 0ddeec9123a4b2445b06942e1cbc8bd5, type: 2}
-  _effectStripTemplate: -{amount}% ENEMY ATTACK SPEED
+  _effectStripTemplate: -{amount}% ENEMY ATK SPEED
   _effects:
   - _type: 15
     _amount: 0.06

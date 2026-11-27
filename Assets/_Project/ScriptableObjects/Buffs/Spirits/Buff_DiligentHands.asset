@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: diligent_hands
   _title: Diligent Hands
   _description: All Spirits clean grids, grow trees, and heal trees faster.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 6a16c4bd0cef55742afd47c36a353042, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 5ccba71f11079d844b9eb22e75755661, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: 21acb2e5af6710f49bfe6d5aee3e9582, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 392656b88c32abe469fa49cc783a356e, type: 2}

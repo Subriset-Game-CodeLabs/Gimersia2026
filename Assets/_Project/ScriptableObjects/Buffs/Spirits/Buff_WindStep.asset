@@ -15,7 +15,9 @@ MonoBehaviour:
   _id: wind_step
   _title: Wind Step
   _description: All Spirits move faster across the island.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 38353b75e05eaf64188217725788bf57, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 0f302d58b3563da4aab41af532a9fdec, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: e9b100cc613f49e4cb14de494299a752, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 392656b88c32abe469fa49cc783a356e, type: 2}

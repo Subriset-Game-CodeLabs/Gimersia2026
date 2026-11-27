@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
 
@@ -7,11 +8,16 @@ public sealed class BuffSelectionHUD : MonoBehaviour
 {
     [SerializeField] private NightRewardController _controller;
     [SerializeField] private GameObject _panel;
+    [SerializeField] private Button _confirmButton;
+    private BuffDefinition _selectedDefinition;
+    private bool _submitting;
     [SerializeField] private BuffChoiceCard[] _cards = new BuffChoiceCard[3];
     private readonly Tween[] _entrances = new Tween[3];
+    private int _selectedIndex = -1;
 
     private void OnEnable()
     {
+        if (_confirmButton != null) _confirmButton.onClick.AddListener(Confirm);
         if (_controller != null) _controller.OnChoicesChanged += Refresh;
         Refresh();
     }
@@ -22,6 +28,7 @@ public sealed class BuffSelectionHUD : MonoBehaviour
     }
     private void OnDisable()
     {
+        if (_confirmButton != null) _confirmButton.onClick.RemoveListener(Confirm);
         if (_controller != null)
         {
             _controller.OnChoicesChanged -= Refresh;
@@ -47,6 +54,7 @@ public sealed class BuffSelectionHUD : MonoBehaviour
     private void Show()
     {
         bool opening = !_panel.activeSelf;
+        ResetSelection();
         _panel.SetActive(true);
         // Bind immediately: an entrance must never defer a reward transaction.
         for (int i = 0; i < _cards.Length; i++)
@@ -65,11 +73,51 @@ public sealed class BuffSelectionHUD : MonoBehaviour
 
     private void Choose(int index)
     {
-        if (_controller != null) _controller.TryChoose(index);
+        if (_submitting || !isActiveAndEnabled || _panel == null || !_panel.activeInHierarchy
+            || _controller == null || !_controller.IsSelecting || index < 0 || index >= _controller.Choices.Count
+            || _cards == null || index >= _cards.Length || _cards[index] == null
+            || !_cards[index].isActiveAndEnabled || _cards[index].Button == null
+            || !_cards[index].Button.isActiveAndEnabled || !_cards[index].Button.IsInteractable()) return;
+        if (_selectedIndex == index && _selectedDefinition == _controller.Choices[index]) return;
+        _selectedIndex = index;
+        _selectedDefinition = _controller.Choices[index];
+        for (int i = 0; i < _cards.Length; i++) _cards[i].SetSelected(i == _selectedIndex);
+        if (_confirmButton != null) _confirmButton.interactable = true;
+        // Only accepted choices sound; refresh/reset and repeated clicks stay silent.
+        AudioManager audio = AudioManager.Instance;
+        if (audio != null) audio.PlayUiClick();
+    }
+
+    private void ResetSelection()
+    {
+        _selectedIndex = -1;
+        _selectedDefinition = null;
+        if (_confirmButton != null) _confirmButton.interactable = false;
+    }
+
+    private void Confirm()
+    {
+        if (_submitting || !isActiveAndEnabled || _confirmButton == null || !_confirmButton.isActiveAndEnabled
+            || !_confirmButton.interactable || _panel == null || !_panel.activeInHierarchy
+            || _controller == null || !_controller.IsSelecting || !IsConfiguredFor(_controller)) return;
+        int index = _selectedIndex;
+        if (index < 0 || index >= _controller.Choices.Count || _controller.Choices[index] != _selectedDefinition)
+        {
+            ResetSelection();
+            return;
+        }
+        _submitting = true;
+        _confirmButton.interactable = false;
+        try
+        {
+            if (!_controller.TryChoose(index)) Show();
+        }
+        finally { _submitting = false; }
     }
 
     private void Hide()
     {
+        ResetSelection();
         ResetEntrance();
         EventSystem events = EventSystem.current;
         GameObject selected = events != null ? events.currentSelectedGameObject : null;
@@ -116,6 +164,11 @@ public sealed class BuffSelectionHUD : MonoBehaviour
     {
         if (!isActiveAndEnabled || _controller != controller) return false;
         if (!HasSeparatePanel()) return false;
+        if (_confirmButton == null || !_confirmButton.enabled || !_confirmButton.gameObject.activeSelf
+            || !_confirmButton.transform.IsChildOf(_panel.transform)) return false;
+        if (_cards != null)
+            foreach (BuffChoiceCard card in _cards)
+                if (card != null && card.Button == _confirmButton) return false;
         return HasConfiguredCards();
     }
 

@@ -15,11 +15,13 @@ MonoBehaviour:
   _id: sharp_essence
   _title: Sharp Essence
   _description: All Spirits strike with greater power.
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: bae8707955140d94ebb19cdaff67a236, type: 3}
+  _cardTemplate: {fileID: 21300000, guid: 991afaa8af8e870439c9979d876dfa3d, type: 3}
+  _cardHoverTemplate: {fileID: 21300000, guid: bba051eeffced8e4ba456ac8438bf932, type: 3}
   _type: 0
   _amount: 1
   _category: {fileID: 11400000, guid: 392656b88c32abe469fa49cc783a356e, type: 2}
-  _effectStripTemplate: +{amount}% SPIRIT DAMAGE
+  _effectStripTemplate: +{amount}% DAMAGE
   _effects:
   - _type: 3
     _amount: 0.08

@@ -8,6 +8,10 @@ public sealed class BuffDefinition : ScriptableObject
     [SerializeField] private string _title;
     [SerializeField, TextArea] private string _description;
     [SerializeField] private Sprite _icon;
+    [Tooltip("Optional static card background, separate from the icon. Unassigned keeps the card's original sprite.")]
+    [SerializeField] private Sprite _cardTemplate;
+    [Tooltip("Optional selected version of the card background, not pointer-hover artwork. Unassigned uses the normal card background.")]
+    [SerializeField] private Sprite _cardHoverTemplate;
     [SerializeField] private BuffType _type;
     [Tooltip("Damage: flat points (use 1). Speed: fractional bonus, e.g. 0.1 = 10%.")]
     [SerializeField] private float _amount = 1f; // TODO(balance): author percentage amounts per speed asset.
@@ -16,6 +20,8 @@ public sealed class BuffDefinition : ScriptableObject
     public string Title => _title;
     public string Description => _description;
     public Sprite Icon => _icon;
+    public Sprite CardTemplate => _cardTemplate;
+    public Sprite CardHoverTemplate => _cardHoverTemplate;
     [SerializeField] private BuffCategoryDefinition _category;
     [Tooltip("Use {amount} for the first effect. Include the percent sign in the text for percentage effects.")]
     [SerializeField] private string _effectStripTemplate;

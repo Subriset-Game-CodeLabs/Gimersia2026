@@ -231,15 +231,24 @@ public sealed class PauseMenu : MonoBehaviour
             && !IsPaused && !SceneFlow.IsLoading && IsPlayable;
         // Never toggle arbitrary scene objects from an invalid prefab assignment.
         if (!_ready) return;
+        // OnEnable must see the final interactability, not the previous hidden-menu state.
+        bool canUse = IsPaused && !SceneFlow.IsLoading;
+        SetButtonInteractable(_resumeButton, canUse);
+        SetButtonInteractable(_restartButton, canUse);
+        SetButtonInteractable(_mainMenuButton, canUse);
+        SetButtonInteractable(_settingsButton, canUse);
         if (HasSeparateOverlay()) _overlay.SetActive(IsPaused);
         if (_pausePanel != null && _pausePanel != gameObject) _pausePanel.SetActive(IsPaused && !_settingsOpen);
         if (_settingsPanel != null && _settingsPanel != gameObject) _settingsPanel.SetActive(IsPaused && _settingsOpen);
-        bool canUse = IsPaused && !SceneFlow.IsLoading;
-        if (_resumeButton != null) _resumeButton.interactable = canUse;
-        if (_restartButton != null) _restartButton.interactable = canUse;
-        if (_mainMenuButton != null) _mainMenuButton.interactable = canUse;
-        if (_settingsButton != null) _settingsButton.interactable = canUse;
         if (_audioSettings != null) _audioSettings.SetInteractable(canUse && _settingsOpen);
+    }
+
+    private static void SetButtonInteractable(Button button, bool interactable)
+    {
+        if (button == null) return;
+        button.interactable = interactable;
+        // Selectable.interactable does not notify this separate visual-state component.
+        if (button.TryGetComponent(out UIStateButton feedback)) feedback.Refresh();
     }
 
     private bool HasSeparateOverlay() => _overlay != null && _overlay != gameObject
