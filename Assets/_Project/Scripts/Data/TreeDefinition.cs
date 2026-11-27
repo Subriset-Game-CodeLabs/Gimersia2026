@@ -4,14 +4,15 @@ using UnityEngine;
 public class TreeDefinition : ScriptableObject
 {
     [SerializeField] private TreeType _type;
+    [SerializeField] private TreeNode _prefab;
 
-    // TODO(balance): placeholder values, none of these are final.
     [SerializeField] private float _maxHp = 100f;
     [SerializeField] private float _phase1Duration = 4f; // Initial -> Intermediate
     [SerializeField] private float _phase2Duration = 4f; // Intermediate -> Complete
     [SerializeField] private int _elementPower = 10;     // power given once Complete
 
     public TreeType Type => _type;
+    public TreeNode Prefab => _prefab;
     public float MaxHp => _maxHp;
     public int ElementPower => _elementPower;
 

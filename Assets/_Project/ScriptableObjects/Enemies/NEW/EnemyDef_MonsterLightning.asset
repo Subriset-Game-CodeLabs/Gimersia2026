@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ece83c593770984dbda1188a2b08ea0, type: 3}
+  m_Name: EnemyDef_MonsterLightning
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDefinition
+  _movementArchetype: 0
+  _approachType: 0
+  _attackPattern: 1
+  _element: 3
+  _weakToAllElements: 0
+  _maxHp: 50
+  _moveSpeed: 0.5
+  _damage: 10
+  _attackInterval: 1.4
+  _attackRange: 1.5
+  _specialAttackChance: 0.25
+  _specialAttackDamageMultiplier: 1.5
+  _projectilePrefab: {fileID: 0}
+  _projectileSpeed: 8
+  _projectileLifetime: 5
+  _hitVfxPrefab: {fileID: 0}

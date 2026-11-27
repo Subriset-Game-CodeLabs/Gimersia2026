@@ -4,8 +4,10 @@ public class EnemyProjectile : MonoBehaviour
 {
     // TODO(balance): small placeholder arrival radius, independent of prefab colliders.
     [SerializeField, Min(0f)] private float _hitTolerance = 0.1f;
+    [SerializeField] private float _targetHeightOffset = 0.8f;
 
     private TreeNode _target;
+    private EnemyController _owner;
     private PhaseManager _phases;
     private float _damage;
     private float _speed;
@@ -24,7 +26,7 @@ public class EnemyProjectile : MonoBehaviour
         BindPhases();
     }
 
-    public void Launch(TreeNode target, float damage, float speed, float lifetime)
+    public void Launch(TreeNode target, float damage, float speed, float lifetime, EnemyController owner = null)
     {
         if (_retired || _launched) return;
         if (target == null || !target.IsTargetable ||
@@ -36,6 +38,7 @@ public class EnemyProjectile : MonoBehaviour
         }
 
         _target = target;
+        _owner = owner;
         _damage = damage;
         _speed = speed;
         _remainingLifetime = lifetime;
@@ -46,6 +49,7 @@ public class EnemyProjectile : MonoBehaviour
 
     private void Update()
     {
+        if (Time.timeScale <= 0f) return;
         if (!_launched || _retired) return;
         if (_target == null || !_target.IsTargetable)
         {
@@ -60,7 +64,7 @@ public class EnemyProjectile : MonoBehaviour
             return;
         }
 
-        Vector3 targetPoint = _target.TargetPoint;
+        Vector3 targetPoint = _target.TargetPoint + Vector3.up * _targetHeightOffset;
         Vector3 position = transform.position;
         float distance = Vector3.Distance(position, targetPoint);
         float step = _speed * Time.deltaTime;
@@ -71,11 +75,16 @@ public class EnemyProjectile : MonoBehaviour
         if (distance > step + tolerance) return;
 
         TreeNode hitTarget = _target;
+        EnemyController attacker = _owner;
         float damage = _damage;
+        Vector3 impactPos = transform.position;
         // Retire before damage: death/phase callbacks can run synchronously.
         Retire();
         if (hitTarget != null && hitTarget.IsTargetable)
-            hitTarget.Data.TakeDamage(damage);
+        {
+            AudioManager.Instance.PlayEnemyProjectileHit(impactPos);
+            hitTarget.Data.TakeDamage(damage, attacker);
+        }
     }
 
     private void BindPhases()
@@ -89,6 +98,7 @@ public class EnemyProjectile : MonoBehaviour
             if (_phases != null)
             {
                 _phases.OnDayStart += HandleDayStart;
+                _phases.OnRewardStart += HandleDayStart;
                 _phases.OnRunFinished += Retire;
             }
         }
@@ -131,6 +141,7 @@ public class EnemyProjectile : MonoBehaviour
         if (_target != null)
             _target.OnAvailabilityChanged -= HandleTargetAvailabilityChanged;
         _target = null;
+        _owner = null;
     }
 
     private void UnbindPhases()
@@ -138,6 +149,7 @@ public class EnemyProjectile : MonoBehaviour
         if (_phases != null)
         {
             _phases.OnDayStart -= HandleDayStart;
+            _phases.OnRewardStart -= HandleDayStart;
             _phases.OnRunFinished -= Retire;
         }
         _phases = null;

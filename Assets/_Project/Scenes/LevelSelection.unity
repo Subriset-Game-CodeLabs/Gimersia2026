@@ -4021,6 +4021,53 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!1 &769715923
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 769715925}
+  - component: {fileID: 769715924}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &769715924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 769715923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a77a6fc9108274b4a91628f932ac60ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  _library: {fileID: 11400000, guid: fa7022189e7d929499334a0e59e7ecf5, type: 2}
+  _defaultMusicFadeDuration: 0.75
+  _sfxPoolSize: 16
+--- !u!4 &769715925
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 769715923}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -17.18104, y: -3.16, z: -6.67814}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &772930759
 GameObject:
   m_ObjectHideFlags: 0
@@ -7720,7 +7767,9 @@ MonoBehaviour:
     - "\xB1 17 Menit"
     - 5 Grid
     - 3 Spirit
-    SceneName: Hakim_playground
+    SceneName: test_level
+    Id: stage_01
+    WinCoins: 300
     Unlocked: 1
   - BannerLabel: LEVEL 2
     LevelTitle: MAP 2 (TERKUNCI)
@@ -7728,7 +7777,9 @@ MonoBehaviour:
     PreviewSprite: {fileID: 21300000, guid: 7f5f99c03735cb948aa11b18af1e6366, type: 3}
     Tags:
     - Terkunci
-    SceneName: 
+    SceneName: test_level
+    Id: stage_02
+    WinCoins: 120
     Unlocked: 0
   - BannerLabel: LEVEL 3
     LevelTitle: MAP 3 (TERKUNCI)
@@ -7737,6 +7788,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 4
     LevelTitle: MAP 4 (TERKUNCI)
@@ -7745,6 +7798,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 5
     LevelTitle: MAP 5 (TERKUNCI)
@@ -7753,6 +7808,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 6
     LevelTitle: MAP 6 (TERKUNCI)
@@ -7761,6 +7818,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 7
     LevelTitle: MAP 7 (TERKUNCI)
@@ -7769,6 +7828,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 8
     LevelTitle: MAP 8 (TERKUNCI)
@@ -7777,6 +7838,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 9
     LevelTitle: MAP 9 (TERKUNCI)
@@ -7785,6 +7848,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 10
     LevelTitle: MAP 10 (TERKUNCI)
@@ -7793,6 +7858,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 11
     LevelTitle: MAP 11 (TERKUNCI)
@@ -7801,6 +7868,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 12
     LevelTitle: MAP 12 (TERKUNCI)
@@ -7809,6 +7878,8 @@ MonoBehaviour:
     Tags:
     - Terkunci
     SceneName: 
+    Id: 
+    WinCoins: 0
     Unlocked: 0
 --- !u!114 &1465582669
 MonoBehaviour:
@@ -11738,3 +11809,4 @@ SceneRoots:
   - {fileID: 1231356204}
   - {fileID: 1060183868}
   - {fileID: 1465582673}
+  - {fileID: 769715925}

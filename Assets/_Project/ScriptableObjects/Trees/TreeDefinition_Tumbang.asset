@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: TreeDefinition_Tumbang
   m_EditorClassIdentifier: Assembly-CSharp::TreeDefinition
   _type: 1
+  _prefab: {fileID: 3697809676261520579, guid: 1aeeed3fb6b215740a2f4a92f6da1b6b, type: 3}
   _maxHp: 100
   _phase1Duration: 6
   _phase2Duration: 6

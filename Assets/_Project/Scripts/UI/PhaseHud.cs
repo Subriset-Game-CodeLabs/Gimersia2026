@@ -18,6 +18,7 @@ public class PhaseHud : MonoBehaviour
         _phases = PhaseManager.Instance;
         _phases.OnDayStart += HandleDayStart;
         _phases.OnNightStart += HandleNightStart;
+        _phases.OnRewardStart += HandleRewardStart;
         _phases.OnRunFinished += HandleRunFinished;
         _startNightButton.onClick.AddListener(_phases.StartNightEarly);
     }
@@ -27,6 +28,7 @@ public class PhaseHud : MonoBehaviour
         if (_phases == null) return;
         _phases.OnDayStart -= HandleDayStart;
         _phases.OnNightStart -= HandleNightStart;
+        _phases.OnRewardStart -= HandleRewardStart;
         _phases.OnRunFinished -= HandleRunFinished;
         _startNightButton.onClick.RemoveListener(_phases.StartNightEarly);
     }
@@ -57,6 +59,13 @@ public class PhaseHud : MonoBehaviour
         // The button is only valid during the day.
         _startNightButton.interactable = false;
         _shownSeconds = -1;
+    }
+
+    private void HandleRewardStart(int night)
+    {
+        _phaseText.text = $"Night {night} cleared";
+        _timerText.text = "Choose one buff";
+        _startNightButton.interactable = false;
     }
 
     private void HandleRunFinished()

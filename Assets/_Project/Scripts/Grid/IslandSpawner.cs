@@ -11,8 +11,8 @@ public class IslandSpawner : MonoBehaviour
     private readonly List<BlockView> _views = new List<BlockView>();
     public IslandData Data { get; private set; }
 
+    [Tooltip("Prefab cadangan jika TreeDefinition pada suatu tile belum diisi Prefab-nya.")]
     [SerializeField] private TreeNode _treePrefab;
-
 
     [SerializeField] private TeamworkSettings _teamworkSettings;
 
@@ -53,7 +53,8 @@ public class IslandSpawner : MonoBehaviour
             view.name = $"Block_{block.Id}";
             view.Initialize(block);
             _views.Add(view);
-            //initialize grid interactable 
+
+            // Initialize grid interactable
             view.GetComponent<GridInteractable>()?.Initialize(block, _teamworkSettings);
 
             foreach (Collider collider in view.TileColliders)
@@ -61,6 +62,7 @@ public class IslandSpawner : MonoBehaviour
 
             foreach (IslandTile tile in view.Tiles)
                 if (tile.ClickCollider != null) _tilesByCollider[tile.ClickCollider] = tile;
+
             SpawnTrees(view, block);
         }
     }
@@ -96,21 +98,30 @@ public class IslandSpawner : MonoBehaviour
         foreach (IslandTile tile in view.Tiles)
         {
             if (tile.TreeDefinition == null) continue;
-            if (_treePrefab == null || tile.TreePoint == null || tile.InteractionPoint == null || TreeRegistry.Instance == null)
+
+            TreeNode prefab = tile.TreeDefinition.Prefab != null
+                ? tile.TreeDefinition.Prefab
+                : _treePrefab;
+
+            if (prefab == null || tile.TreePoint == null || tile.InteractionPoint == null || TreeRegistry.Instance == null)
             {
-                Debug.LogError("Cannot spawn tree: assign Tree Prefab, TreeRegistry, Tree Point and Interaction Point.", tile);
+                Debug.LogError($"Cannot spawn tree on tile '{tile.name}': assign Prefab in TreeDefinition (or fallback Tree Prefab), TreeRegistry, Tree Point and Interaction Point.", tile);
                 continue;
             }
+
             Transform point = tile.TreePoint;
-            var node = Instantiate(_treePrefab, point.position, point.rotation, point);
+            var node = Instantiate(prefab, point.position, point.rotation, point);
             node.SetInteractionPoint(tile.InteractionPoint);
             node.Initialize(tile.TreeDefinition);
+
             TreeInteractable growth = node.GetComponent<TreeInteractable>();
             if (growth != null) growth.Initialize(_teamworkSettings);
             else Debug.LogError("Tree Prefab needs TreeInteractable.", node);
+
             TreeElementInteractable element = node.GetComponent<TreeElementInteractable>();
             if (element == null) element = node.gameObject.AddComponent<TreeElementInteractable>();
             element.Initialize(_teamworkSettings);
+
             TreeRegistry.Instance.Register(node);
             tile.SetTree(node);
             nodes.Add(node);

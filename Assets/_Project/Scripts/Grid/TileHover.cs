@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class TileHover : MonoBehaviour
 {
     [SerializeField] private IslandSpawner _island;
+    [SerializeField] private SpiritSelection _selection;
     [SerializeField] private Camera _camera;
     [SerializeField] private LayerMask _tileLayers = ~0;
 
@@ -16,13 +17,16 @@ public class TileHover : MonoBehaviour
     private void Awake()
     {
         if (_camera == null) _camera = Camera.main;
+        if (_selection == null) _selection = FindFirstObjectByType<SpiritSelection>();
     }
 
     private void Update()
     {
-        // Mouse.current is null if no mouse is connected.
+        bool hasSelectedSpirit = _selection != null && _selection.Selected.Count > 0;
         Mouse mouse = Mouse.current;
-        if (mouse == null || _camera == null || _island == null ||
+
+        // Jika pemain belum mengklik/memilih Spirit sama sekali, matikan seluruh efek hover grid
+        if (!hasSelectedSpirit || mouse == null || _camera == null || _island == null ||
             (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
         {
             SetHovered(null);
@@ -52,7 +56,11 @@ public class TileHover : MonoBehaviour
         if (view == _hovered) return;
         if (_hovered != null) _hovered.SetHighlighted(false);
         _hovered = view;
-        if (_hovered != null) _hovered.SetHighlighted(true);
+        if (_hovered != null)
+        {
+            _hovered.SetHighlighted(true);
+            AudioManager.Instance.PlayTileHover(_hovered.CleaningPoint);
+        }
     }
 
     private void SetHoveredTile(IslandTile tile)
@@ -60,7 +68,11 @@ public class TileHover : MonoBehaviour
         if (tile == _hoveredTile) return;
         if (_hoveredTile != null) _hoveredTile.SetHighlighted(false);
         _hoveredTile = tile;
-        if (_hoveredTile != null) _hoveredTile.SetHighlighted(true);
+        if (_hoveredTile != null)
+        {
+            _hoveredTile.SetHighlighted(true);
+            AudioManager.Instance.PlayTileHover(_hoveredTile.MovementPoint);
+        }
     }
 
     private void OnDisable()
