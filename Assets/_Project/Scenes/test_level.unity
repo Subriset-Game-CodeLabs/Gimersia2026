@@ -5286,7 +5286,7 @@ MonoBehaviour:
   _effectStrip: {fileID: 418649319}
   _selectionContent: {fileID: 799562150}
   _selectedContentOffset: {x: 0, y: 18.3}
-  _selectionTweenDuration: 0.15
+  _selectionTweenDuration: 0.01
   _selectionTweenEase: 9
 --- !u!114 &557540991
 MonoBehaviour:
@@ -6157,7 +6157,7 @@ MonoBehaviour:
   _effectStrip: {fileID: 2119357084}
   _selectionContent: {fileID: 231122996}
   _selectedContentOffset: {x: 0, y: 18.3}
-  _selectionTweenDuration: 0.15
+  _selectionTweenDuration: 0.01
   _selectionTweenEase: 9
 --- !u!114 &658457874
 MonoBehaviour:
@@ -15807,6 +15807,7 @@ MonoBehaviour:
   _settings: {fileID: 11400000, guid: 0fdf01fd2d6605f45a6f8f60a618001e, type: 2}
   _sunLight: {fileID: 534972856}
   _camera: {fileID: 2099845892}
+  _dayVfxObjects: []
 --- !u!4 &1846889296
 Transform:
   m_ObjectHideFlags: 0
@@ -18361,7 +18362,7 @@ MonoBehaviour:
   _effectStrip: {fileID: 760205705}
   _selectionContent: {fileID: 1324600049}
   _selectedContentOffset: {x: 0, y: 18.3}
-  _selectionTweenDuration: 0.15
+  _selectionTweenDuration: 0.01
   _selectionTweenEase: 9
 --- !u!1 &2109000110
 GameObject:
