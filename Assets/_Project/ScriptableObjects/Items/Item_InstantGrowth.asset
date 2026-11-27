@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_InstantGrowth
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   _id: instant_growth
-  _title: Instant Growth
-  _description: instant tumbuhin pohon
-  _icon: {fileID: 0}
+  _title: Magic Soil
+  _description: Sprinkle on a sprout or fallen tree to grow it fully right away.
+  _icon: {fileID: 21300000, guid: f830a9ecec7195142b5db188d2c1a003, type: 3}
   _effect: 2
   _radius: 3
   _damage: 10

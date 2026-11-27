@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_TeamHaste
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   _id: team_haste
-  _title: Team Haste
-  _description: Memberikan effect haste ke semua spirit
-  _icon: {fileID: 0}
+  _title: Swift Wind
+  _description: All three Spirits move and attack faster for a while.
+  _icon: {fileID: 21300000, guid: 2f20fbd27bf99fa4d969be81258da7de, type: 3}
   _effect: 4
   _radius: 3
   _damage: 10

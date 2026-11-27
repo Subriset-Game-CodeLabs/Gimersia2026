@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Item_AreaStrike
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   _id: area_strike
-  _title: Area Strike
-  _description: kasih damage di area
-  _icon: {fileID: 0}
+  _title: Seed Bomb
+  _description: Throw it at a group of enemies. The seed explodes and hits every enemy in the area.
+  _icon: {fileID: 21300000, guid: 03a9b74bff058b741a216ecfb069939c, type: 3}
   _effect: 0
   _radius: 3
   _damage: 10
