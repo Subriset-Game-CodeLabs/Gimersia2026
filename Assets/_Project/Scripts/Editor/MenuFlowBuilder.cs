@@ -476,11 +476,11 @@ public static class MenuFlowBuilder
         CreateDotLine(pathsGo.transform, new Vector2(colX[3], rowY[0] - 54f), new Vector2(colX[3], rowY[1] + 54f), 4);
         CreateDotLine(pathsGo.transform, new Vector2(colX[0], rowY[1] - 54f), new Vector2(colX[0], rowY[2] + 54f), 4);
 
-        Sprite nodeUnlocked = LoadSprite("Buttons/LevelNode_Unlocked_Blank.png");
-        Sprite nodeHover = LoadSprite("Buttons/LevelNode_Hover_Blank.png");
-        Sprite nodeSelected = LoadSprite("Buttons/LevelNode_Selected_Blank.png");
-        Sprite nodeCompleted = LoadSprite("Buttons/LevelNode_Completed_Blank.png");
-        Sprite nodeLocked = LoadSprite("Buttons/LevelNode_Locked.png");
+        Sprite nodeUnlocked = LoadSprite("Buttons/Modular/LevelNode_Unlocked_Blank.png");
+        Sprite nodeHover = LoadSprite("Buttons/Modular/LevelNode_Hover_Blank.png");
+        Sprite nodeSelected = LoadSprite("Buttons/Modular/LevelNode_Selected_Blank.png");
+        Sprite nodeCompleted = LoadSprite("Buttons/Modular/LevelNode_Completed_Blank.png");
+        Sprite nodeLocked = LoadSprite("Buttons/Modular/LevelNode_Locked.png");
 
         // Snake ordering: Row 0 (1..4 L->R), Row 1 (5..8 R->L), Row 2 (9..12 L->R)
         Vector2[] nodeCoords =
@@ -970,9 +970,9 @@ public static class MenuFlowBuilder
         Image visualImg = AddSpriteImage(visualGo, unlockedSprite, preserveAspect: true);
         visualImg.raycastTarget = false;
 
-        TextMeshProUGUI numTmp = CreateText(root.transform, "Number", number.ToString(), 40f,
+        TextMeshProUGUI numTmp = CreateText(root.transform, "Number", number.ToString(), 48f,
             HeadingText, _headingFont, useHeadingOutline: true);
-        SetCenter(numTmp.gameObject, new Vector2(80f, 52f), new Vector2(0f, 18f));
+        SetCenter(numTmp.gameObject, new Vector2(96f, 64f), new Vector2(0f, 24f));
 
         UILevelNodeButton node = root.AddComponent<UILevelNodeButton>();
         Wire(node, new Dictionary<string, Object>

@@ -212,7 +212,8 @@ public class LevelSelection : MonoBehaviour
                 if (_nodes[i] != null) _nodes[i].SetSelectedNode(i == index);
         }
 
-        if (_levelBannerText != null) _levelBannerText.text = entry.BannerLabel;
+        if (_levelBannerText != null)
+            _levelBannerText.text = string.IsNullOrWhiteSpace(entry.BannerLabel) ? $"LEVEL {index + 1}" : entry.BannerLabel;
         if (_levelTitleText != null) _levelTitleText.text = entry.LevelTitle;
         if (_descriptionText != null) _descriptionText.text = entry.Description;
         if (_previewImage != null && entry.PreviewSprite != null) _previewImage.sprite = entry.PreviewSprite;
