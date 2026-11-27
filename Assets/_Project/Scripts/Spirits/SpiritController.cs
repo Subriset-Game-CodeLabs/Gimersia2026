@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -47,6 +48,24 @@ public class SpiritController : MonoBehaviour
     [SerializeField, Min(0.05f)] private float _pursuitRepathInterval = 0.3f;
     [SerializeField] private float _turnSpeed = 12f;
 
+    [Header("Tree Interaction")]
+    [Tooltip("Jika aktif, Spirit mendekati pohon dari arah datangnya dan langsung berinteraksi tanpa memutar ke titik kiri pohon.")]
+    [SerializeField] private bool _interactTreeFromApproachDirection = true;
+    [Tooltip("Jarak berhenti Spirit dari titik pusat pohon saat menumbuhkan / merawat pohon.")]
+    [SerializeField, Min(0.2f)] private float _treeInteractRadius = 0.85f;
+
+    [Header("Element Power Milestone VFX")]
+    [Tooltip("Batas minimal power elemen untuk memunculkan VFX (dapat diubah bebas di Inspector).")]
+    [SerializeField, Min(1)] private int _powerMilestoneThreshold = 50;
+    [Tooltip("Prefab VFX dari folder Project ATAU child GameObject VFX di dalam Spirit.")]
+    [SerializeField] private GameObject _powerMilestoneVfxPrefab;
+    [Tooltip("Opsional: titik kemunculan VFX pada Spirit. Otomatis memakai posisi Spirit jika kosong.")]
+    [SerializeField] private Transform _powerVfxSpawnPoint;
+    [Tooltip("Jika aktif, VFX menempel dan ikut bergerak bersama Spirit.")]
+    [SerializeField] private bool _attachVfxToSpirit = true;
+    [Tooltip("Centang jika VFX berupa aura permanen yang harus hilang apabila pohon diserang dan power turun di bawah batas.")]
+    [SerializeField] private bool _destroyVfxWhenBelowThreshold = false;
+
     [Header("Combat & Projectile")]
     [SerializeField] private SpiritCombatSettings _combatSettings;
     [Tooltip("Temporary damage snapshot diagnostics, at most once per scaled second per spirit. Disable after testing.")]
@@ -64,10 +83,12 @@ public class SpiritController : MonoBehaviour
     private SpiritView _view;
     private SpiritAnimator _animator;
     private StageBuffState _buffs;
+
     public void InitializeBuffs(StageBuffState buffs)
     {
         ClearItemStatus();
         _buffs = buffs;
+        ResetPowerMilestoneState();
     }
 
     private readonly Vector3[] _pathCorners = new Vector3[128];
@@ -77,11 +98,19 @@ public class SpiritController : MonoBehaviour
     private float _nextPursuitRepath;
     private Vector3 _target;
     private IInteractable _interactable;
+    private bool _useRadialTreeInteraction;
+    private Vector3 _radialInteractCenter;
     private EnemyController _enemy;
     private Vector3 _lastKnownEnemyPos;
     private Bounds _islandBounds;
     private float _attackCooldown;
     private bool _registeredAsAttacker;
+
+    // Monitor milestone power elemen
+    private bool _hasStarted;
+    private Coroutine _powerMonitorCoroutine;
+    private bool _hasTriggeredPowerMilestone;
+    private GameObject _activeMilestoneVfxInstance;
 
     // State mesin bertarung
     private int _formationSlotIndex;
@@ -124,7 +153,25 @@ public class SpiritController : MonoBehaviour
         if (!ActiveSpirits.Contains(this))
             ActiveSpirits.Add(this);
 
+        // Jika VFX dipasang sebagai child di dalam Spirit, pastikan tersembunyi di awal game
+        if (_powerMilestoneVfxPrefab != null && _powerMilestoneVfxPrefab.transform.IsChildOf(transform))
+        {
+            _powerMilestoneVfxPrefab.SetActive(false);
+        }
+
         enabled = false;
+    }
+
+    private void Start()
+    {
+        _hasStarted = true;
+        StartPowerMonitor();
+    }
+
+    private void OnEnable()
+    {
+        if (_hasStarted)
+            StartPowerMonitor();
     }
 
     private void OnDestroy()
@@ -136,8 +183,110 @@ public class SpiritController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (_powerMonitorCoroutine != null)
+        {
+            StopCoroutine(_powerMonitorCoroutine);
+            _powerMonitorCoroutine = null;
+        }
+
         if (!gameObject.activeInHierarchy) ClearItemStatus();
         Stop();
+    }
+
+    private void StartPowerMonitor()
+    {
+        if (_powerMonitorCoroutine != null) return;
+        _powerMonitorCoroutine = StartCoroutine(MonitorElementPowerRoutine());
+    }
+
+    private IEnumerator MonitorElementPowerRoutine()
+    {
+        WaitForSeconds wait = new WaitForSeconds(0.2f);
+        while (true)
+        {
+            EvaluateElementPowerMilestone();
+            yield return wait;
+        }
+    }
+
+    private void EvaluateElementPowerMilestone()
+    {
+        TreeRegistry registry = TreeRegistry.Instance;
+        ElementType spiritElement = Element;
+        if (registry == null || spiritElement == ElementType.None) return;
+
+        int currentPower = registry.GetTotalPower(spiritElement);
+        int threshold = Mathf.Max(1, _powerMilestoneThreshold);
+
+        if (currentPower >= threshold)
+        {
+            if (!_hasTriggeredPowerMilestone)
+            {
+                _hasTriggeredPowerMilestone = true;
+                SpawnPowerMilestoneVfx();
+            }
+        }
+        else if (_hasTriggeredPowerMilestone)
+        {
+            _hasTriggeredPowerMilestone = false;
+            if (_destroyVfxWhenBelowThreshold)
+            {
+                HideOrDestroyMilestoneVfx();
+            }
+        }
+    }
+
+    private void SpawnPowerMilestoneVfx()
+    {
+        if (_powerMilestoneVfxPrefab == null) return;
+
+        // Mode 1: VFX adalah child GameObject yang sudah ditempel di dalam Spirit
+        if (_powerMilestoneVfxPrefab.transform.IsChildOf(transform))
+        {
+            _powerMilestoneVfxPrefab.SetActive(true);
+            ParticleSystem childPs = _powerMilestoneVfxPrefab.GetComponentInChildren<ParticleSystem>(true);
+            if (childPs != null)
+            {
+                childPs.Clear(true);
+                childPs.Play(true);
+            }
+            return;
+        }
+
+        // Mode 2: VFX adalah Prefab asset dari folder Project
+        Transform anchor = _powerVfxSpawnPoint != null ? _powerVfxSpawnPoint : transform;
+        _activeMilestoneVfxInstance = _attachVfxToSpirit
+            ? Instantiate(_powerMilestoneVfxPrefab, anchor.position, anchor.rotation, anchor)
+            : Instantiate(_powerMilestoneVfxPrefab, anchor.position, anchor.rotation);
+
+        if (_activeMilestoneVfxInstance != null)
+        {
+            _activeMilestoneVfxInstance.SetActive(true);
+            ParticleSystem ps = _activeMilestoneVfxInstance.GetComponentInChildren<ParticleSystem>(true);
+            if (ps != null)
+                ps.Play(true);
+        }
+    }
+
+    private void HideOrDestroyMilestoneVfx()
+    {
+        if (_powerMilestoneVfxPrefab != null && _powerMilestoneVfxPrefab.transform.IsChildOf(transform))
+        {
+            _powerMilestoneVfxPrefab.SetActive(false);
+            return;
+        }
+
+        if (_activeMilestoneVfxInstance != null)
+        {
+            Destroy(_activeMilestoneVfxInstance);
+            _activeMilestoneVfxInstance = null;
+        }
+    }
+
+    private void ResetPowerMilestoneState()
+    {
+        _hasTriggeredPowerMilestone = false;
+        HideOrDestroyMilestoneVfx();
     }
 
     public void MoveTo(Vector3 worldPoint)
@@ -158,7 +307,80 @@ public class SpiritController : MonoBehaviour
         if (_animator != null) _animator.NotifyPlayerInteraction();
         Stop();
         SetTarget(target);
+
+        if (_interactTreeFromApproachDirection && TryGetTreeCenter(target, out Vector3 treeCenter))
+        {
+            _useRadialTreeInteraction = true;
+            _radialInteractCenter = treeCenter;
+
+            float interactRadius = Mathf.Max(0.2f, _treeInteractRadius);
+            float currentFlatDist = FlatDistance(transform.position, treeCenter);
+
+            if (currentFlatDist <= interactRadius + 0.08f && NavigationReady())
+            {
+                StartInteractingWithCurrentTarget();
+                return;
+            }
+
+            Vector3 fromTree = transform.position - treeCenter;
+            fromTree.y = 0f;
+            Vector3 approachDir = fromTree.sqrMagnitude > 0.0001f ? fromTree.normalized : Vector3.back;
+            Vector3 desiredApproachPoint = treeCenter + approachDir * interactRadius;
+
+            if (TryBeginPath(desiredApproachPoint, false))
+            {
+                SetState(SpiritState.Moving);
+                enabled = true;
+                return;
+            }
+
+            float fallbackRadius = Mathf.Max(_destinationSampleRadius, interactRadius + 0.6f);
+            if (TryBeginPath(treeCenter, false, fallbackRadius))
+            {
+                SetState(SpiritState.Moving);
+                enabled = true;
+                return;
+            }
+        }
+
+        _useRadialTreeInteraction = false;
         BeginMove(target.InteractionPoint);
+    }
+
+    private static bool TryGetTreeCenter(IInteractable target, out Vector3 treeCenter)
+    {
+        if (target is Component comp)
+        {
+            TreeNode tree = comp.GetComponentInParent<TreeNode>();
+            if (tree != null)
+            {
+                treeCenter = tree.TargetPoint;
+                return true;
+            }
+        }
+
+        treeCenter = Vector3.zero;
+        return false;
+    }
+
+    private void StartInteractingWithCurrentTarget()
+    {
+        StopNavigation();
+        IInteractable arrivedTarget = _interactable;
+        OnArrived?.Invoke();
+        if (_hasMovePath || _interactable != arrivedTarget) return;
+
+        if (IsLiveTarget(_interactable) && _interactable.CanInteract)
+        {
+            _interactable.AddWorker(this);
+            _registeredAsWorker = true;
+            SetState(SpiritState.Interacting);
+            enabled = true;
+        }
+        else
+        {
+            Stop();
+        }
     }
 
     public void Attack(EnemyController enemy, Bounds islandBounds, int formationSlotIndex = 0, int formationSlotCount = 1)
@@ -224,6 +446,8 @@ public class SpiritController : MonoBehaviour
         if (_registeredAsWorker && IsLiveTarget(_interactable)) _interactable.RemoveWorker(this);
         _registeredAsWorker = false;
         _interactable = target;
+        if (target == null)
+            _useRadialTreeInteraction = false;
     }
 
     private static bool IsLiveTarget(IInteractable target)
@@ -322,6 +546,13 @@ public class SpiritController : MonoBehaviour
 
     private bool HasArrived()
     {
+        if (_useRadialTreeInteraction)
+        {
+            float interactReach = Mathf.Max(0.2f, _treeInteractRadius) + ArrivalDistance;
+            if (FlatDistance(transform.position, _radialInteractCenter) <= interactReach)
+                return true;
+        }
+
         float tolerance = ArrivalDistance;
         Vector3 toTarget = transform.position - _target;
         toTarget.y = 0f;
@@ -391,21 +622,7 @@ public class SpiritController : MonoBehaviour
         }
         if (!HasArrived()) return;
 
-        StopNavigation();
-        IInteractable arrivedTarget = _interactable;
-        OnArrived?.Invoke();
-        if (State != SpiritState.Moving || _hasMovePath || _interactable != arrivedTarget) return;
-
-        if (IsLiveTarget(_interactable) && _interactable.CanInteract)
-        {
-            _interactable.AddWorker(this);
-            _registeredAsWorker = true;
-            SetState(SpiritState.Interacting);
-        }
-        else
-        {
-            Stop();
-        }
+        StartInteractingWithCurrentTarget();
     }
 
     private void UpdateInteracting()
@@ -416,9 +633,11 @@ public class SpiritController : MonoBehaviour
             return;
         }
 
-        Vector3 lookTarget = (_interactable is Component comp)
-            ? comp.transform.position
-            : _interactable.InteractionPoint;
+        Vector3 lookTarget = _useRadialTreeInteraction
+            ? _radialInteractCenter
+            : ((_interactable is Component comp)
+                ? comp.transform.position
+                : _interactable.InteractionPoint);
         FaceDirection(lookTarget - transform.position);
 
         _interactable.Interact(this, Time.deltaTime);

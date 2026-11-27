@@ -16,6 +16,10 @@ public class TreeNode : MonoBehaviour
     [SerializeField] private GameObject _waterTreeVisual;
     [SerializeField] private GameObject _lightningTreeVisual;
 
+    [Header("Random Grid Rotation")]
+    [Tooltip("Mengacak rotasi sumbu Y pohon kelipatan 90 derajat (0, 90, 180, 270) saat spawn agar selaras dengan grid pulau.")]
+    [SerializeField] private bool _randomizeYRotation90 = true;
+
     [Header("Elemental Pool of Light (Pencahayaan Malam & Siang)")]
     [Tooltip("Opsional: Point Light anak pada prefab pohon. Otomatis dibuat jika dikosongkan.")]
     [SerializeField] private Light _elementPointLight;
@@ -73,6 +77,7 @@ public class TreeNode : MonoBehaviour
     private Color _currentLightColor = Color.white;
     private Color _targetLightColor = Color.white;
     private float _lightPulseSeed;
+    private Quaternion _initialUiWorldRotation = Quaternion.identity;
 
     public TreeData Data { get; private set; }
     public event Action<TreeNode> OnAvailabilityChanged;
@@ -99,12 +104,16 @@ public class TreeNode : MonoBehaviour
                 _worldUiRoot = worldCanvas.transform;
         }
 
+        if (_worldUiRoot != null)
+            _initialUiWorldRotation = _worldUiRoot.rotation;
+
         _underAttackIndicator = GetComponent<TreeUnderAttackIndicator>();
         if (_underAttackIndicator == null)
             _underAttackIndicator = gameObject.AddComponent<TreeUnderAttackIndicator>();
 
         _lightPulseSeed = Mathf.Abs(GetInstanceID() * 0.173f);
         EnsureElementLight();
+        ApplyRandomGridRotation();
 
         SetGrowthVfxActive(false);
         SetElementChangeVfxActive(false);
@@ -128,6 +137,8 @@ public class TreeNode : MonoBehaviour
     {
         if (Data != null) Data.ClearItemStatus();
 
+        ApplyRandomGridRotation();
+
         Data = new TreeData(definition);
         Data.OnStageChanged += Refresh;
         Data.OnElementChanged += Refresh;
@@ -137,6 +148,18 @@ public class TreeNode : MonoBehaviour
 
         Refresh();
         SetRevealed(false);
+    }
+
+    private void ApplyRandomGridRotation()
+    {
+        if (!_randomizeYRotation90) return;
+
+        float randomY = UnityEngine.Random.Range(0, 4) * 90f;
+        Vector3 euler = transform.localEulerAngles;
+        transform.localEulerAngles = new Vector3(euler.x, randomY, euler.z);
+
+        if (_worldUiRoot != null)
+            _worldUiRoot.rotation = _initialUiWorldRotation;
     }
 
     public void SetRevealed(bool revealed)
@@ -221,7 +244,6 @@ public class TreeNode : MonoBehaviour
         _elementPointLight.enabled = true;
         _elementPointLight.color = _currentLightColor;
 
-        // Denyut cahaya halus (6%) khusus saat malam agar suasana terasa hidup
         float pulse = (_isNight && _currentLightIntensity > 0.1f)
             ? 1f + Mathf.Sin((Time.time * 2.2f) + _lightPulseSeed) * 0.06f
             : 1f;
@@ -372,6 +394,9 @@ public class TreeNode : MonoBehaviour
         {
             _worldUiRoot.localPosition = new Vector3(0f, targetHeight, 0f);
         }
+
+        if (_randomizeYRotation90)
+            _worldUiRoot.rotation = _initialUiWorldRotation;
     }
 
     private GameObject ResolveActiveVisual()
