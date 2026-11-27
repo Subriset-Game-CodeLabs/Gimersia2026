@@ -51,8 +51,10 @@ public sealed class BuffSelectionHUD : MonoBehaviour
         // Bind immediately: an entrance must never defer a reward transaction.
         for (int i = 0; i < _cards.Length; i++)
         {
-            BuffDefinition definition = _controller.Choices[i];
-            _cards[i].Bind(definition, i, Choose, _controller.State.GetStacks(definition.Type));
+            bool shown = i < _controller.Choices.Count;
+            _cards[i].gameObject.SetActive(shown);
+            if (shown) _cards[i].Bind(_controller.Choices[i], i, Choose);
+            else _cards[i].Clear();
         }
         if (!opening) return;
 
@@ -74,14 +76,16 @@ public sealed class BuffSelectionHUD : MonoBehaviour
         if (selected != null && _panel != null && selected.transform.IsChildOf(_panel.transform))
             events.SetSelectedGameObject(null);
 
+        if (HasSeparatePanel()) _panel.SetActive(false);
         if (_cards != null)
         {
             foreach (BuffChoiceCard card in _cards)
             {
-                if (card != null) card.Clear();
+                if (card == null) continue;
+                card.Clear();
+                if (_panel != null && card.transform.IsChildOf(_panel.transform)) card.gameObject.SetActive(true);
             }
         }
-        if (HasSeparatePanel()) _panel.SetActive(false);
     }
 
     private void PlayEntrance()
@@ -129,6 +133,7 @@ public sealed class BuffSelectionHUD : MonoBehaviour
         for (int i = 0; i < _cards.Length; i++)
         {
             BuffChoiceCard card = _cards[i];
+            if (card != null && _controller != null && _controller.IsSelecting && i >= _controller.Choices.Count && !card.gameObject.activeSelf) continue;
             if (card == null || !card.enabled || !card.gameObject.activeSelf) return false;
             if (!card.IsConfigured || !card.transform.IsChildOf(_panel.transform)) return false;
 

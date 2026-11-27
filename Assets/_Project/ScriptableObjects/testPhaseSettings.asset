@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: testPhaseSettings
   m_EditorClassIdentifier: Assembly-CSharp::PhaseSettings
   _dayDuration: 20
-  _totalDays: 2
+  _totalDays: 3

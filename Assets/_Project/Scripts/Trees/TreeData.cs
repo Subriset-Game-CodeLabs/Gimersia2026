@@ -16,13 +16,31 @@ public class TreeData
     public ElementType Element { get; private set; } = ElementType.None;
     public TreeStage Stage { get; private set; } = TreeStage.Initial;
     public float Hp { get; private set; }
+    private float _maxHpMultiplier = 1f;
+    private float _damageReduction;
+
+    public void ApplyStageBonuses(StageBuffState buffs)
+    {
+        float multiplier = buffs?.Multiplier(BuffType.TreeMaxHp) ?? 1f;
+        _damageReduction = Mathf.Clamp01(buffs?.GetTotal(BuffType.TreeDamageReduction) ?? 0f);
+        if (_maxHpMultiplier == multiplier) return;
+        _maxHpMultiplier = multiplier;
+        Hp = Mathf.Min(Hp, MaxHp);
+        OnHpChanged?.Invoke(); // HP can stay constant while the health bar denominator changes.
+    }
+
+    public void HealFraction(float fraction, bool missingHp)
+    {
+        if (NeedsHealing && fraction > 0f) Heal((missingHp ? MaxHp - Hp : MaxHp) * fraction);
+    }
 
     public float MaxHp
     {
         get
         {
             if (Stage == TreeStage.Initial) return 0f;
-            return (Definition != null && Definition.MaxHp > 0f) ? Definition.MaxHp : DefaultTierMaxHp;
+            float baseHp = Definition != null && Definition.MaxHp > 0f ? Definition.MaxHp : DefaultTierMaxHp;
+            return baseHp * _maxHpMultiplier;
         }
     }
 
@@ -154,6 +172,8 @@ public class TreeData
     private void TakeDamage(float amount, Vector3 hitDirection, EnemyController attacker)
     {
         if (!IsVulnerableToEnemies || IsShielded || amount <= 0f) return;
+        amount *= 1f - _damageReduction;
+        if (amount <= 0f) return;
 
         if (hitDirection == Vector3.zero && attacker != null)
         {

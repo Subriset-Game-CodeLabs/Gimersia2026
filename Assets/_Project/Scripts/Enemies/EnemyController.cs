@@ -80,6 +80,7 @@ public class EnemyController : MonoBehaviour
     public EnemyDefinition Definition { get; private set; }
     public EnemyState State { get; private set; } = EnemyState.Idle;
     public float Hp { get; private set; }
+    public float MaxHp { get; private set; }
     public bool IsAlive => Hp > 0f && !_deathStarted;
     public bool IsFrozen => _itemStatus.IsFrozen(Time.time);
     public float FreezeRemaining => _itemStatus.GetFreezeRemaining(Time.time);
@@ -161,7 +162,9 @@ public class EnemyController : MonoBehaviour
     private int _wormDirectionEmergencesRemaining;
     private Transform _currentWormPoint;
 
-    private float CurrentSpeedMultiplier => _isHovered ? _hoveredSpeedMultiplier : 1f;
+    private StageBuffState StageBuffs => PhaseManager.Instance != null ? PhaseManager.Instance.Buffs : null;
+    private float CurrentSpeedMultiplier => (_isHovered ? _hoveredSpeedMultiplier : 1f)
+        * (StageBuffs != null ? StageBuffs.RemainingFraction(BuffType.EnemyMoveSpeedReduction) : 1f);
 
     private float CurrentIslandAgentSpeed
     {
@@ -208,7 +211,11 @@ public class EnemyController : MonoBehaviour
         ClearItemStatus();
         DisableAgent();
         Definition = definition;
-        Hp = definition != null ? Mathf.Max(0f, definition.MaxHp) : 0f;
+        // Spawn snapshot: later selections never resize or heal an existing enemy.
+        float baseHp = definition != null ? Mathf.Max(0f, definition.MaxHp) : 0f;
+        float hpFactor = StageBuffs != null ? StageBuffs.RemainingFraction(BuffType.EnemyMaxHpReduction) : 1f;
+        MaxHp = baseHp > 0f ? Mathf.Max(Mathf.Min(1f, baseHp), baseHp * hpFactor) : 0f;
+        Hp = MaxHp;
         SetTargetTree(null);
         _attackCooldown = 0f;
         _nextRepath = 0f;
@@ -1034,13 +1041,20 @@ public class EnemyController : MonoBehaviour
     {
         if (IsFrozen || _attackCooldown > 0f || _target == null || !_target.IsEnemyTargetable) return;
 
-        _attackCooldown = Mathf.Max(0.05f, Definition.AttackInterval);
+        float attackRate = StageBuffs != null ? StageBuffs.RemainingFraction(BuffType.EnemyAttackSpeedReduction) : 1f;
+        // A zero attack rate cannot start a swing. Saturation keeps tiny rates finite.
+        if (attackRate <= 0f) return;
+        _attackCooldown = (float)Math.Min(float.MaxValue,
+            (double)Mathf.Max(0.05f, Definition.AttackInterval) / attackRate);
 
         int attackIndex = 0;
-        float finalDamage = Definition.Damage;
+        float finalDamage = Definition.Damage
+            * (StageBuffs != null ? StageBuffs.RemainingFraction(BuffType.EnemyDamageReduction) : 1f);
 
         if (Definition.AttackPattern == EnemyAttackPattern.BasicAndSpecial &&
-            UnityEngine.Random.value < Definition.SpecialAttackChance)
+            UnityEngine.Random.value < (StageBuffs != null
+                ? StageBuffs.EnemySpecialChance(Definition.SpecialAttackChance)
+                : Definition.SpecialAttackChance))
         {
             attackIndex = 1;
             finalDamage *= Definition.SpecialAttackDamageMultiplier;

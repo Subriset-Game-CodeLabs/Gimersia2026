@@ -42,7 +42,7 @@ public class TreeHealInteractable : MonoBehaviour, IInteractable
         _healedSinceLog = 0f;
         _loggedPhase = GetPhase();
         Debug.Log($"[Heal] {name}: started in {_loggedPhase}, " +
-                  $"HP {_node.Data.Hp:0.0}/{_node.Data.Definition.MaxHp:0.0}", this);
+                  $"HP {_node.Data.Hp:0.0}/{_node.Data.MaxHp:0.0}", this);
     }
 
     public void RemoveWorker(SpiritController spirit)
@@ -68,7 +68,7 @@ public class TreeHealInteractable : MonoBehaviour, IInteractable
             ? _nightSpeedMultiplier
             : 1f;
 
-        float work = _workers.GetShare(deltaTime);
+        float work = _workers.GetShare(deltaTime) * spirit.WorkSpeedMultiplier;
         float previousHp = _node.Data.Hp;
         _node.Data.Heal(work * Mathf.Max(0f, _hpPerSecond) *
                         Mathf.Max(0f, phaseMultiplier));
@@ -103,7 +103,7 @@ public class TreeHealInteractable : MonoBehaviour, IInteractable
         float rate = seconds > 0f ? _healedSinceLog / seconds : 0f;
         Debug.Log($"[Heal] {name}: {reason}, phase={_loggedPhase}, " +
                   $"spirits={_workers.Count}, " +
-                  $"HP={_node.Data.Hp:0.0}/{_node.Data.Definition.MaxHp:0.0}, " +
+                  $"HP={_node.Data.Hp:0.0}/{_node.Data.MaxHp:0.0}, " +
                   $"+{_healedSinceLog:0.0} in {seconds:0.0}s " +
                   $"({rate:0.0} HP/s)", this);
         _healedSinceLog = 0f;

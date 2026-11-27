@@ -117,7 +117,7 @@ public class TreeInteractable : MonoBehaviour, IInteractable
         }
 
         UpdateProgressVfx();
-        _progress += _workers.GetShare(deltaTime);
+        _progress += _workers.GetShare(deltaTime) * spirit.WorkSpeedMultiplier;
 
         if (_progress < GetCurrentDuration())
         {

@@ -6,6 +6,7 @@ public sealed class NightRewardController : MonoBehaviour
 {
     [SerializeField] private BuffDefinition[] _pool;
     [SerializeField] private BuffSelectionHUD _hud;
+    [SerializeField] private BuffCapSettings _statCaps;
     private readonly StageBuffState _state = new StageBuffState();
     private readonly List<BuffDefinition> _choices = new List<BuffDefinition>(3);
     private PhaseManager _phases;
@@ -16,6 +17,7 @@ public sealed class NightRewardController : MonoBehaviour
     public IReadOnlyList<BuffDefinition> Choices => _choices.AsReadOnly();
     public bool IsSelecting => _selecting;
     public event Action OnChoicesChanged;
+    public event Action<BuffDefinition> OnCardChosen;
 
     private void Start()
     {
@@ -52,7 +54,8 @@ public sealed class NightRewardController : MonoBehaviour
         if (_hud == null || !_hud.IsConfiguredFor(this)) return Error("Assign an enabled BuffSelectionHUD with three configured distinct cards and an active host outside its panel.");
         if (!_selecting)
         {
-            if (!TryDraw(_pool, out BuffDefinition[] draw, out string error)) return Error(error);
+            if (!TryDraw(_pool, _state, _statCaps, out BuffDefinition[] draw, out string error)) return Error(error);
+            if (draw.Length == 0) return _phases.CompleteReward(this);
             _choices.Clear();
             _choices.AddRange(draw);
             _selecting = true;
@@ -67,9 +70,10 @@ public sealed class NightRewardController : MonoBehaviour
             || _phases == null || !_phases.CanCompleteReward(this)) return false;
         BuffDefinition choice = _choices[index];
         if (choice == null || !choice.TryValidate(out _)) return Error("An offered buff became invalid. Restore its definition before selecting.");
-        _state.Add(choice.Type, choice.Amount);
+        if (!_state.TryApply(choice, _statCaps)) return Error("This card no longer has an applicable effect.");
         _selecting = false; // Close the transaction before any listener can click again.
         _choices.Clear();
+        OnCardChosen?.Invoke(choice);
         OnChoicesChanged?.Invoke();
         return _phases.CompleteReward(this);
     }
@@ -87,12 +91,14 @@ public sealed class NightRewardController : MonoBehaviour
         return false;
     }
 
-    // Draw by type first, then definition: multiple variants cannot produce duplicate types.
     public static bool TryDraw(IReadOnlyList<BuffDefinition> pool, out BuffDefinition[] choices, out string error)
+        => TryDraw(pool, null, null, out choices, out error);
+
+    private static bool TryDraw(IReadOnlyList<BuffDefinition> pool, StageBuffState state, BuffCapSettings caps, out BuffDefinition[] choices, out string error)
     {
         choices = null;
         error = null;
-        var groups = new Dictionary<BuffType, List<BuffDefinition>>();
+        var eligible = new List<BuffDefinition>();
         var ids = new HashSet<string>(StringComparer.Ordinal);
         if (pool == null || pool.Count < 3) { error = "Assign at least three valid buff definitions."; return false; }
         for (int i = 0; i < pool.Count; i++)
@@ -101,22 +107,14 @@ public sealed class NightRewardController : MonoBehaviour
             if (definition == null) { error = $"Pool entry {i} is missing; assign or remove it."; return false; }
             if (!definition.TryValidate(out error)) { error = $"Pool entry {i} ({definition.name}): {error}"; return false; }
             if (!ids.Add(definition.Id)) { error = $"Duplicate buff ID '{definition.Id}'; use unique IDs."; return false; }
-            if (!groups.TryGetValue(definition.Type, out List<BuffDefinition> group))
-            {
-                group = new List<BuffDefinition>();
-                groups.Add(definition.Type, group);
-            }
-            group.Add(definition);
+            if (state == null || state.CanApply(definition, caps)) eligible.Add(definition);
         }
-        if (groups.Count < 3) { error = "Pool needs at least three distinct buff types (damage, attack speed, growth speed)."; return false; }
-        var types = new List<BuffType>(groups.Keys);
-        choices = new BuffDefinition[3];
+        choices = new BuffDefinition[Math.Min(3, eligible.Count)];
         for (int i = 0; i < choices.Length; i++)
         {
-            int selected = UnityEngine.Random.Range(i, types.Count);
-            BuffType temp = types[i]; types[i] = types[selected]; types[selected] = temp;
-            List<BuffDefinition> group = groups[types[i]];
-            choices[i] = group[UnityEngine.Random.Range(0, group.Count)];
+            int selected = UnityEngine.Random.Range(i, eligible.Count);
+            choices[i] = eligible[selected];
+            eligible[selected] = eligible[i];
         }
         return true;
     }

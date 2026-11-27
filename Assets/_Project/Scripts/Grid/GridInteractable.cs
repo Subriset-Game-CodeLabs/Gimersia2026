@@ -35,7 +35,7 @@ public class GridInteractable : MonoBehaviour, IInteractable
     public void Interact(SpiritController spirit, float deltaTime)
     {
         if (!CanInteract) return;
-        _progress += _workers.GetShare(deltaTime);
+        _progress += _workers.GetShare(deltaTime) * spirit.WorkSpeedMultiplier;
         if (_progress >= _cleanDuration)
         {
             // BlockView listens to OnStateChanged and recolors itself.

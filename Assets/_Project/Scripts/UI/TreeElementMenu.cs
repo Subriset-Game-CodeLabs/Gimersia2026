@@ -238,7 +238,7 @@ public class TreeElementMenu : MonoBehaviour
         if (_tree == null || !_panel.gameObject.activeSelf) return;
         _statusText.text =
             $"Tree: {_tree.Data.Element}\n" +
-            $"HP: {_tree.Data.Hp:0}/{_tree.Data.Definition.MaxHp:0}\n" +
+            $"HP: {_tree.Data.Hp:0}/{_tree.Data.MaxHp:0}\n" +
             _feedback;
         _healButton.interactable =
             _tree.Data.NeedsHealing &&

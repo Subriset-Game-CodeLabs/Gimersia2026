@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ed00744e899f34ca6968389bc1d406, type: 3}
+  m_Name: BuffCaps_Default
+  m_EditorClassIdentifier: Assembly-CSharp::BuffCapSettings
+  _limits:
+  - _type: 12
+    _amount: 0.3
+    _chanceReductionMode: 0
+  - _type: 13
+    _amount: 0.3
+    _chanceReductionMode: 0
+  - _type: 14
+    _amount: 0.3
+    _chanceReductionMode: 0
+  - _type: 15
+    _amount: 0.3
+    _chanceReductionMode: 0
+  - _type: 16
+    _amount: 0.4
+    _chanceReductionMode: 0
+  - _type: 3
+    _amount: 0.48
+    _chanceReductionMode: 0
+  - _type: 1
+    _amount: 0.48
+    _chanceReductionMode: 0
+  - _type: 4
+    _amount: 0.6
+    _chanceReductionMode: 0
+  - _type: 5
+    _amount: 0.72
+    _chanceReductionMode: 0
+  - _type: 6
+    _amount: 0.48
+    _chanceReductionMode: 0
+  - _type: 7
+    _amount: 0.72
+    _chanceReductionMode: 0
+  - _type: 8
+    _amount: 0.3
+    _chanceReductionMode: 0
+  - _type: 9
+    _amount: 0.6
+    _chanceReductionMode: 0
+  - _type: 10
+    _amount: 0.48
+    _chanceReductionMode: 0
+  - _type: 11
+    _amount: 0.48
+    _chanceReductionMode: 0

@@ -9,6 +9,8 @@ public sealed class BuffChoiceCard : MonoBehaviour
     [SerializeField] private TMP_Text _title;
     [SerializeField] private TMP_Text _description;
     [SerializeField] private Image _icon;
+    [SerializeField] private TMP_Text _categoryLabel;
+    [SerializeField] private TMP_Text _effectStrip;
     private Action<int> _choose;
     private int _index;
     public bool IsConfigured => _button != null && _button.enabled && _button.gameObject.activeSelf
@@ -23,7 +25,9 @@ public sealed class BuffChoiceCard : MonoBehaviour
         _index = index;
         _choose = choose;
         _title.text = definition.Title;
-        _description.text = $"{definition.Description}\nStacks: {currentStacks} → {currentStacks + 1}";
+        _description.text = definition.Description;
+        if (_categoryLabel != null) _categoryLabel.text = definition.CategoryLabel;
+        if (_effectStrip != null) _effectStrip.text = definition.EffectStrip;
         if (_icon != null)
         {
             _icon.sprite = definition.Icon;

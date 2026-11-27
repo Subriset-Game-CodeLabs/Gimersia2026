@@ -2,5 +2,19 @@ public enum BuffType
 {
     SpiritDamage,
     SpiritAttackSpeed,
-    TreeGrowthSpeed
+    TreeGrowthSpeed,
+    SpiritDamageFraction,
+    SpiritMoveSpeed,
+    SpiritWorkSpeed,
+    SpiritAttackRange,
+    TreeMaxHp,
+    TreeDamageReduction,
+    TreeTurretDamage,
+    TreeTurretAttackSpeed,
+    TreeDayHeal,
+    EnemyMoveSpeedReduction,
+    EnemyMaxHpReduction,
+    EnemyDamageReduction,
+    EnemyAttackSpeedReduction,
+    EnemySpecialChanceReduction
 }

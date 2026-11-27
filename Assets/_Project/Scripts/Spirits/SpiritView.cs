@@ -95,7 +95,7 @@ public class SpiritView : MonoBehaviour
         float attackRange = 0f;
         if (_spiritController != null && _spiritController.CombatSettings != null)
         {
-            attackRange = _spiritController.CombatSettings.AttackRange;
+            attackRange = _spiritController.GetEffectiveAttackRange(EnemyHoverSelector.CurrentHoveredEnemy);
         }
 
         float diameter = Mathf.Max(0.1f, attackRange * 2f);

@@ -326,7 +326,9 @@ public class TreeElementTurret : MonoBehaviour
             }
         }
 
-        return damage;
+        StageBuffState buffs = PhaseManager.Instance != null ? PhaseManager.Instance.Buffs : null;
+        attackSpeedMultiplier *= buffs?.Multiplier(BuffType.TreeTurretAttackSpeed) ?? 1f;
+        return damage * (buffs?.Multiplier(BuffType.TreeTurretDamage) ?? 1f);
     }
 
     private SpiritProjectile GetProjectilePrefab(ElementType element)

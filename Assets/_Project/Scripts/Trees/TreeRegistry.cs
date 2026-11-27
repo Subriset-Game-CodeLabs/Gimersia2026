@@ -15,6 +15,49 @@ public class TreeRegistry : MonoBehaviour
     public event Action<TreeNode> OnTreeDied;
     public event Action OnCountChanged;
     public event Action OnPowerChanged;
+    private PhaseManager _phases;
+    private NightRewardController _rewards;
+    private int _lastHealDay;
+
+    private void Start()
+    {
+        _phases = PhaseManager.Instance;
+        if (_phases == null) return;
+        _phases.OnDayStart += HandleDayStart;
+        _rewards = _phases.Rewards;
+        if (_rewards == null) return;
+        _rewards.OnCardChosen += HandleCardChosen;
+        ApplyTreeBonuses(null); // Trees may have registered in Awake before phase setup.
+    }
+
+    private void HandleCardChosen(BuffDefinition card) => ApplyTreeBonuses(card);
+
+    private void ApplyTreeBonuses(BuffDefinition card)
+    {
+        int count = _trees.Count;
+        for (int i = 0; i < count; i++)
+        {
+            TreeNode tree = _trees[i];
+            if (tree == null || tree.Data == null) continue;
+            tree.Data.ApplyStageBonuses(_rewards.State);
+            if (card != null && tree.IsTargetable)
+                tree.Data.HealFraction(card.SelectionHealFraction, card.HealMissingHp);
+        }
+    }
+
+    private void HandleDayStart(int day)
+    {
+        if (day <= _lastHealDay) return;
+        _lastHealDay = day;
+        float fraction = _phases.Buffs?.GetTotal(BuffType.TreeDayHeal) ?? 0f;
+        if (fraction <= 0f) return;
+        int count = _trees.Count;
+        for (int i = 0; i < count; i++)
+        {
+            TreeNode tree = _trees[i];
+            if (tree != null && tree.IsTargetable) tree.Data.HealFraction(fraction, false);
+        }
+    }
 
     private void Awake()
     {
@@ -25,11 +68,15 @@ public class TreeRegistry : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_phases != null) _phases.OnDayStart -= HandleDayStart;
+        if (_rewards != null) _rewards.OnCardChosen -= HandleCardChosen;
         if (Instance == this) Instance = null;
     }
 
     public void Register(TreeNode tree)
     {
+        if (tree == null || tree.Data == null || _trees.Contains(tree)) return;
+        tree.Data.ApplyStageBonuses(_rewards != null ? _rewards.State : null);
         _trees.Add(tree);
         tree.OnAvailabilityChanged += HandleAvailabilityChanged;
         tree.Data.OnElementChanged += HandlePowerChanged;

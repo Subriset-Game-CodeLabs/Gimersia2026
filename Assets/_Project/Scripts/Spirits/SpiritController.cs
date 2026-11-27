@@ -38,7 +38,7 @@ public class SpiritController : MonoBehaviour
 
     private void RefreshMovementSpeed()
     {
-        if (_agent != null) _agent.speed = Mathf.Max(0f, _moveSpeed) * _itemStatus.MoveSpeedMultiplier;
+        if (_agent != null) _agent.speed = Mathf.Max(0f, _moveSpeed) * _itemStatus.MoveSpeedMultiplier * (_buffs?.Multiplier(BuffType.SpiritMoveSpeed) ?? 1f);
     }
 
     [Header("Movement")]
@@ -83,11 +83,13 @@ public class SpiritController : MonoBehaviour
     private SpiritView _view;
     private SpiritAnimator _animator;
     private StageBuffState _buffs;
+    public float WorkSpeedMultiplier => _buffs?.Multiplier(BuffType.SpiritWorkSpeed) ?? 1f;
 
     public void InitializeBuffs(StageBuffState buffs)
     {
         ClearItemStatus();
         _buffs = buffs;
+        RefreshMovementSpeed();
         ResetPowerMilestoneState();
     }
 
@@ -643,12 +645,13 @@ public class SpiritController : MonoBehaviour
         _interactable.Interact(this, Time.deltaTime);
     }
 
-    private float GetEffectiveAttackRange(EnemyController targetEnemy)
+    public float GetEffectiveAttackRange(EnemyController targetEnemy)
     {
-        if (_combatSettings == null || targetEnemy == null) return 0f;
-        return targetEnemy.IsOffIslandOrFlying
+        if (_combatSettings == null) return 0f;
+        float range = targetEnemy != null && targetEnemy.IsOffIslandOrFlying
             ? _combatSettings.SeaEnemyTargetableRadiusFromIsland
             : _combatSettings.AttackRange;
+        return range * (_buffs?.Multiplier(BuffType.SpiritAttackRange) ?? 1f);
     }
 
     private void UpdateFighting()
@@ -703,7 +706,7 @@ public class SpiritController : MonoBehaviour
         float distance = toEnemy.magnitude;
         float effectiveRange = GetEffectiveAttackRange(_enemy);
 
-        if (_enemy.IsWormAtLastPoint)
+        if (_enemy.IsWormAtLastPoint && distance > effectiveRange)
         {
             if (!_hasReachedShoreWaitSpot)
             {
@@ -713,7 +716,7 @@ public class SpiritController : MonoBehaviour
                     return;
             }
 
-            ExecuteRangedAttackAtCurrentPosition(toEnemy, distance);
+            UnregisterAttacker(); // A shore position is not itself permission to fire out of range.
             return;
         }
 
@@ -961,7 +964,7 @@ public class SpiritController : MonoBehaviour
         ElementSettings elements = registry != null ? registry.Settings : null;
         ElementType spiritElement = Element;
 
-        float damage = _combatSettings.Damage + (_buffs != null ? _buffs.GetTotal(BuffType.SpiritDamage) : 0f);
+        float damage = _buffs?.SpiritDamage(_combatSettings.Damage) ?? _combatSettings.Damage;
         float attackSpeed = _combatSettings.BaseAttackSpeedMultiplier;
 
         if (elements != null && _enemy != null && _enemy.Definition != null)
