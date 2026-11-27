@@ -19,12 +19,13 @@ MonoBehaviour:
   _weakToAllElements: 0
   _maxHp: 50
   _moveSpeed: 0.5
+  _islandMoveSpeedMultiplier: 0.65
   _damage: 10
   _attackInterval: 1.4
   _attackRange: 8
   _specialAttackChance: 0.25
   _specialAttackDamageMultiplier: 1.5
-  _projectilePrefab: {fileID: -4535533858528922032, guid: a1dce097e1ae9964a92392cf6002e77a, type: 3}
+  _projectilePrefab: {fileID: 552086937953301577, guid: f6b1ad1a1c7eb9a42b2716a9500ee890, type: 3}
   _projectileSpeed: 8
   _projectileLifetime: 5
   _hitVfxPrefab: {fileID: 0}
