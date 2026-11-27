@@ -7880,8 +7880,8 @@ MonoBehaviour:
     PreviewSprite: {fileID: 21300000, guid: 7f5f99c03735cb948aa11b18af1e6366, type: 3}
     Tags:
     - Terkunci
-    SceneName: 
-    Id: 
+    SceneName: test_level
+    Id: stage_03
     WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 4
@@ -7890,8 +7890,8 @@ MonoBehaviour:
     PreviewSprite: {fileID: 21300000, guid: 7f5f99c03735cb948aa11b18af1e6366, type: 3}
     Tags:
     - Terkunci
-    SceneName: 
-    Id: 
+    SceneName: test_level
+    Id: stage_04
     WinCoins: 0
     Unlocked: 0
   - BannerLabel: LEVEL 5
@@ -10612,6 +10612,7 @@ MonoBehaviour:
   _hoverSprite: {fileID: 21300000, guid: dfe2495e1fb407c49a8f37b6ee05b91d, type: 3}
   _pressedSprite: {fileID: 21300000, guid: 472f8eb6ce4660d4487d51f25b3f9314, type: 3}
   _disabledSprite: {fileID: 21300000, guid: 98e475687a5c3114d8d78702cbaa8c3e, type: 3}
+  _hoverContentOffset: {x: 0, y: 0}
   _pressedContentOffset: {x: 0, y: -4}
   _disabledTint: {r: 0.7, g: 0.7, b: 0.7, a: 0.85}
 --- !u!222 &1998433962
@@ -11042,6 +11043,7 @@ MonoBehaviour:
   _hoverSprite: {fileID: 21300000, guid: 739e85c21a095534a91cb9da70a0c524, type: 3}
   _pressedSprite: {fileID: 21300000, guid: 79235b90220dea247869c9b2814864c1, type: 3}
   _disabledSprite: {fileID: 0}
+  _hoverContentOffset: {x: 0, y: 0}
   _pressedContentOffset: {x: 0, y: -4}
   _disabledTint: {r: 0.7, g: 0.7, b: 0.7, a: 0.85}
 --- !u!222 &2043702503
