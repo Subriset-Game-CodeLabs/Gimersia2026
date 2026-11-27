@@ -5,13 +5,17 @@ using UnityEngine;
 // - Texture Type: Sprite (2D and UI), single, no mipmaps, clamp, uncompressed alpha
 // - Board_*: 9-slice border so the panel can be resized without stretching the frame
 // - ClockHand: pivot at the hub so it can rotate around the clock centre
+// UI_v2 (page "4 · Revisi & Tambahan", exported at 2x): same settings, but
+// Pixels Per Unit = 200 so "Set Native Size" gives the exact Figma (in-game) size.
 public class UISpriteImportSettings : AssetPostprocessor
 {
     const string Root = "Assets/_Project/UI/";
+    const string RootV2 = "Assets/_Project/UI_v2/";
 
     void OnPreprocessTexture()
     {
-        if (!assetPath.StartsWith(Root) || !assetPath.EndsWith(".png")) return;
+        bool v2 = assetPath.StartsWith(RootV2);
+        if ((!assetPath.StartsWith(Root) && !v2) || !assetPath.EndsWith(".png")) return;
 
         var importer = (TextureImporter)assetImporter;
         importer.textureType = TextureImporterType.Sprite;
@@ -22,7 +26,9 @@ public class UISpriteImportSettings : AssetPostprocessor
         importer.filterMode = FilterMode.Bilinear;
         importer.textureCompression = TextureImporterCompression.Uncompressed;
         importer.maxTextureSize = 4096;
-        importer.spritePixelsPerUnit = 100;
+        importer.spritePixelsPerUnit = v2 ? 200 : 100;
+        importer.npotScale = TextureImporterNPOTScale.None;
+        importer.sRGBTexture = true;
 
         var settings = new TextureImporterSettings();
         importer.ReadTextureSettings(settings);
