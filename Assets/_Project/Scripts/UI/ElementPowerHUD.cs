@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +15,8 @@ public class ElementPowerHUD : MonoBehaviour
         [Header("1. Tampilan Angka Power")]
         [SerializeField] private TMP_Text _powerText;
         [SerializeField] private string _numberFormat = "{0}";
+        [Tooltip("Jika aktif, tampilkan format '{power} +{bonus}% ATK' sesuai ElementSettings.")]
+        [SerializeField] private bool _showAttackBonus = true;
 
         [Header("2A. Fill Grid (Kotak-Kotak Segmen Terpisah)")]
         [Tooltip("Masukkan daftar Image kotak grid secara berurutan dari kiri ke kanan / bawah ke atas.")]
@@ -23,14 +26,16 @@ public class ElementPowerHUD : MonoBehaviour
         [SerializeField] private Color _activeCellColor = Color.white;
         [SerializeField] private Color _inactiveCellColor = new Color(1f, 1f, 1f, 0.18f);
 
-        [Header("2B. Opsional: Single Image Fill (Jika memakai 1 Image bertekstur grid)")]
+        [Header("2B. Opsional: Single Image Fill / Anchor Fill (UI v2 Capsule Bar)")]
         [SerializeField] private Image _singleFillGridImage;
+        [SerializeField] private RectTransform _anchorFillRect;
+        [SerializeField, Range(0f, 0.4f)] private float _minNonZeroFill = 0.18f;
         [SerializeField, Min(10)] private int _maxBarPower = 100;
 
         private int _lastDisplayedPower = -1;
         private float _targetFill01;
         private float _currentFill01;
-        private float _textPunchTimer;
+        private Tween _punchTween;
         private Vector3 _baseTextScale = Vector3.one;
         private bool _cachedScale;
 
@@ -43,22 +48,40 @@ public class ElementPowerHUD : MonoBehaviour
             }
         }
 
-        public void SetPower(int totalPower, bool instant)
+        public void SetPower(int totalPower, ElementSettings settings, bool instant)
         {
             Initialize();
 
-            // 1. Update Angka Power
+            // 1. Update Angka Power (+ Bonus ATK% dinamis)
             if (_powerText != null && _lastDisplayedPower != totalPower)
             {
-                _powerText.text = string.Format(_numberFormat, totalPower);
+                if (_showAttackBonus)
+                {
+                    int bonusPct = 0;
+                    if (settings != null)
+                    {
+                        float mult = settings.GetDamageBonusMultiplier(totalPower);
+                        bonusPct = Mathf.Max(0, Mathf.RoundToInt((mult - 1f) * 100f));
+                    }
+                    _powerText.text = $"{totalPower} +{bonusPct}% ATK";
+                }
+                else
+                {
+                    _powerText.text = string.Format(_numberFormat, totalPower);
+                }
+
                 if (!instant && _lastDisplayedPower >= 0)
                 {
-                    _textPunchTimer = 0.22f;
+                    _punchTween?.Kill();
+                    _powerText.transform.localScale = _baseTextScale;
+                    _punchTween = _powerText.transform.DOPunchScale(_baseTextScale * 0.14f, 0.22f, 4, 0.5f)
+                        .SetUpdate(true)
+                        .SetLink(_powerText.gameObject);
                 }
             }
             _lastDisplayedPower = totalPower;
 
-            // 2A. Update Kotak-Kotak Grid Segmen (1 kotak = +10 Power)
+            // 2A. Update Kotak-Kotak Grid Segmen (legacy support)
             if (_gridCells != null && _gridCells.Length > 0)
             {
                 int litCount = Mathf.Clamp(totalPower / Mathf.Max(1, _powerPerCell), 0, _gridCells.Length);
@@ -69,39 +92,53 @@ public class ElementPowerHUD : MonoBehaviour
                 }
             }
 
-            // 2B. Update Single Fill Image (jika digunakan)
-            _targetFill01 = Mathf.Clamp01((float)totalPower / Mathf.Max(1, _maxBarPower));
+            // 2B. Update Smooth Bar Fill
+            float rawFill = Mathf.Clamp01((float)totalPower / Mathf.Max(1, _maxBarPower));
+            _targetFill01 = totalPower > 0 ? Mathf.Max(_minNonZeroFill, rawFill) : 0f;
+
             if (instant)
             {
                 _currentFill01 = _targetFill01;
-                if (_singleFillGridImage != null)
-                    _singleFillGridImage.fillAmount = _currentFill01;
+                ApplyFill(_currentFill01);
             }
         }
 
         public void TickVisual(float deltaTime, float fillLerpSpeed)
         {
-            if (_singleFillGridImage != null && !Mathf.Approximately(_currentFill01, _targetFill01))
+            if ((_singleFillGridImage != null || _anchorFillRect != null) && !Mathf.Approximately(_currentFill01, _targetFill01))
             {
                 _currentFill01 = Mathf.MoveTowards(_currentFill01, _targetFill01, fillLerpSpeed * deltaTime);
-                _singleFillGridImage.fillAmount = _currentFill01;
+                ApplyFill(_currentFill01);
             }
+        }
 
-            if (_powerText != null && _textPunchTimer > 0f)
+        public void Cleanup()
+        {
+            _punchTween?.Kill();
+            _punchTween = null;
+        }
+
+        private void ApplyFill(float fill01)
+        {
+            if (_singleFillGridImage != null)
+                _singleFillGridImage.fillAmount = fill01;
+
+            if (_anchorFillRect != null)
             {
-                _textPunchTimer = Mathf.Max(0f, _textPunchTimer - deltaTime);
-                float t = 1f - (_textPunchTimer / 0.22f);
-                float punch = 1f + Mathf.Sin(t * Mathf.PI) * 0.22f;
-                _powerText.transform.localScale = _baseTextScale * punch;
+                _anchorFillRect.anchorMin = new Vector2(0f, 0f);
+                _anchorFillRect.anchorMax = new Vector2(Mathf.Clamp01(fill01), 1f);
+                _anchorFillRect.offsetMin = Vector2.zero;
+                _anchorFillRect.offsetMax = Vector2.zero;
+                _anchorFillRect.gameObject.SetActive(fill01 > 0.001f);
             }
         }
     }
 
-    [Header("Konfigurasi 3 Elemen (Api, Air, Petir)")]
+    [Header("Konfigurasi 3 Elemen (Air, Api, Petir)")]
     [SerializeField] private ElementPowerSlot[] _elementSlots =
     {
-        new ElementPowerSlot { label = "Api (Fire)", element = ElementType.Fire },
         new ElementPowerSlot { label = "Air (Water)", element = ElementType.Water },
+        new ElementPowerSlot { label = "Api (Fire)", element = ElementType.Fire },
         new ElementPowerSlot { label = "Petir (Lightning)", element = ElementType.Lightning }
     };
 
@@ -127,6 +164,12 @@ public class ElementPowerHUD : MonoBehaviour
         {
             _subscribedRegistry.OnPowerChanged -= HandlePowerChanged;
             _subscribedRegistry = null;
+        }
+
+        if (_elementSlots != null)
+        {
+            for (int i = 0; i < _elementSlots.Length; i++)
+                _elementSlots[i]?.Cleanup();
         }
     }
 
@@ -158,7 +201,7 @@ public class ElementPowerHUD : MonoBehaviour
             if (slot == null) continue;
 
             int power = registry.GetTotalPower(slot.element);
-            slot.SetPower(power, instant);
+            slot.SetPower(power, registry.Settings, instant);
         }
     }
 

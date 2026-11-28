@@ -23,6 +23,7 @@ public class EnemySpawner : MonoBehaviour
 
     public int RemainingSpawns => _progress.RemainingSpawns;
     public int AliveCount => _progress.AliveCount;
+    public int TotalWaveEnemies { get; private set; }
 
     private void Awake()
     {
@@ -76,6 +77,7 @@ public class EnemySpawner : MonoBehaviour
     {
         if (_spawnRoutine != null) StopCoroutine(_spawnRoutine);
         _spawnRoutine = null;
+        TotalWaveEnemies = 0;
         _progress.Cancel();
         foreach (EnemyController enemy in _aliveEnemies)
         {
@@ -98,6 +100,7 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
         if (!TryResolveWave(night, out List<ScheduledGroup> schedule, out int count)) return;
+        TotalWaveEnemies = count;
         _progress.Begin(count);
         _spawnRoutine = StartCoroutine(SpawnWave(schedule));
     }
