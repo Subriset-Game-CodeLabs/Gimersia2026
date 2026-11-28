@@ -35,15 +35,20 @@ public class GridInteractable : MonoBehaviour, IInteractable
     public void Interact(SpiritController spirit, float deltaTime)
     {
         if (!CanInteract) return;
+
+        float duration = Mathf.Max(0.01f, _cleanDuration);
         _progress += _workers.GetShare(deltaTime) * spirit.WorkSpeedMultiplier;
-        if (_progress >= _cleanDuration)
+
+        if (_progress >= duration)
         {
-            // BlockView listens to OnStateChanged and recolors itself.
+            _block.SetCleanProgress(1f);
             _block.SetState(GridState.Clean);
         }
         else
         {
-            AudioManager.Instance.PlayBlockCleaningTick(InteractionPoint);
+            _block.SetCleanProgress(_progress / duration);
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayBlockCleaningTick(InteractionPoint);
         }
     }
 }

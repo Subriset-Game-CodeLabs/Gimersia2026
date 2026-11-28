@@ -9,6 +9,8 @@ public class BlockView : MonoBehaviour
     [SerializeField] private List<Collider> _tileColliders = new List<Collider>();
     [SerializeField] private Transform _cleaningPoint;
     [SerializeField] private GameObject _dirtyVisualsRoot;
+    [Tooltip("Isi dengan 1, 2, atau 3 bagian sampah sesuai kebutuhan blok ini. Jika dikosongkan semua, otomatis mengambil semua child langsung di dalam Dirty Visuals Root.")]
+    [SerializeField] private GameObject[] _dirtyStageGroups = new GameObject[3];
     [SerializeField] private Renderer[] _groundRenderers;
 
     [Header("Hover & Click Polish")]
@@ -38,6 +40,7 @@ public class BlockView : MonoBehaviour
     private MaterialPropertyBlock _propBlock;
     private Color[] _baseMainColors;
     private Color[] _baseRimColors;
+    private GameObject[] _resolvedStageGroups;
 
     // Visual lift & click feedback state
     private Vector3 _visualRootBaseLocalPos;
@@ -64,6 +67,7 @@ public class BlockView : MonoBehaviour
         _data = data;
         CacheGroundAppearance();
         _data.OnStateChanged += HandleStateChanged;
+        _data.OnCleanProgressChanged += HandleCleanProgressChanged;
         foreach (IslandTile tile in _tiles) tile.Initialize(this);
         RefreshState();
 
@@ -76,12 +80,22 @@ public class BlockView : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (_data != null) _data.OnStateChanged -= HandleStateChanged;
+        if (_data != null)
+        {
+            _data.OnStateChanged -= HandleStateChanged;
+            _data.OnCleanProgressChanged -= HandleCleanProgressChanged;
+        }
+    }
+
+    private void HandleCleanProgressChanged(GridBlockData _)
+    {
+        if (_data == null) return;
+        ApplyDirtyStageVisuals(_data.State == GridState.Clean, _data.CleanProgress);
     }
 
     private void HandleStateChanged(GridBlockData _)
     {
-        if (_data != null && _data.State == GridState.Clean)
+        if (_data != null && _data.State == GridState.Clean && AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayBlockCleaned(CleaningPoint);
         }
@@ -93,7 +107,9 @@ public class BlockView : MonoBehaviour
         bool clean = _data.State == GridState.Clean;
         foreach (Collider collider in _tileColliders)
             if (collider != null) collider.enabled = !clean;
-        if (_dirtyVisualsRoot != null) _dirtyVisualsRoot.SetActive(!clean);
+
+        ApplyDirtyStageVisuals(clean, _data.CleanProgress);
+
         foreach (IslandTile tile in _tiles) tile.SetSelectable(clean);
 
         _isHighlighted = false;
@@ -104,6 +120,51 @@ public class BlockView : MonoBehaviour
         ApplyLiftOffset(0f);
         ApplyVisualState(0f, 0f);
         enabled = false;
+    }
+
+    private void ApplyDirtyStageVisuals(bool isClean, float normalizedProgress)
+    {
+        if (_dirtyVisualsRoot != null)
+            _dirtyVisualsRoot.SetActive(!isClean);
+
+        if (_resolvedStageGroups == null || _resolvedStageGroups.Length == 0)
+            return;
+
+        int stageCount = _resolvedStageGroups.Length;
+        int clearedCount = isClean
+            ? stageCount
+            : Mathf.Clamp(Mathf.FloorToInt(normalizedProgress * stageCount), 0, stageCount - 1);
+
+        for (int i = 0; i < stageCount; i++)
+        {
+            if (_resolvedStageGroups[i] != null)
+                _resolvedStageGroups[i].SetActive(!isClean && i >= clearedCount);
+        }
+    }
+
+    private void ResolveDirtyStageGroups()
+    {
+        var list = new List<GameObject>();
+
+        if (_dirtyStageGroups != null)
+        {
+            for (int i = 0; i < _dirtyStageGroups.Length; i++)
+            {
+                if (_dirtyStageGroups[i] != null)
+                    list.Add(_dirtyStageGroups[i]);
+            }
+        }
+
+        if (list.Count == 0 && _dirtyVisualsRoot != null)
+        {
+            Transform root = _dirtyVisualsRoot.transform;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                list.Add(root.GetChild(i).gameObject);
+            }
+        }
+
+        _resolvedStageGroups = list.ToArray();
     }
 
     public bool TryGetBounds(out Bounds bounds)
@@ -149,7 +210,8 @@ public class BlockView : MonoBehaviour
     {
         if (_data == null || _data.State != GridState.Corrupted) return;
 
-        AudioManager.Instance.PlayTileCommandClick(CleaningPoint);
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlayTileCommandClick(CleaningPoint);
 
         _clickDipTimer = _clickDipDuration;
         _trackedOrders.Clear();
@@ -292,6 +354,8 @@ public class BlockView : MonoBehaviour
         if (_tileColliders == null) _tileColliders = new List<Collider>();
         if (_tileColliders.Count == 0 && _tileCollider != null)
             _tileColliders.Add(_tileCollider);
+
+        ResolveDirtyStageGroups();
 
         _tiles = GetComponentsInChildren<IslandTile>();
 
