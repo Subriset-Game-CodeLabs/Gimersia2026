@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -37,6 +38,7 @@ public class UIStateButton : UIBehaviour,
     private bool _isSelected;
     private bool _isPressed;
     private bool _selectedByPointer;
+    private Tween _contentTween;
 
     protected override void Awake()
     {
@@ -58,6 +60,8 @@ public class UIStateButton : UIBehaviour,
 
     protected override void OnDisable()
     {
+        _contentTween?.Kill();
+        _contentTween = null;
         _isHovered = false;
         _isSelected = false;
         _isPressed = false;
@@ -217,7 +221,19 @@ public class UIStateButton : UIBehaviour,
         if (_content != null && _contentRestCaptured)
         {
             Vector2 offset = pressed ? _pressedContentOffset : hovered ? _hoverContentOffset : Vector2.zero;
-            _content.anchoredPosition = _contentRestPos + offset;
+            Vector2 targetPos = _contentRestPos + offset;
+            _contentTween?.Kill();
+            if (Application.isPlaying && isActiveAndEnabled && _content.gameObject.activeInHierarchy)
+            {
+                _contentTween = _content.DOAnchorPos(targetPos, 0.08f)
+                    .SetEase(Ease.OutCubic)
+                    .SetUpdate(true)
+                    .SetLink(_content.gameObject);
+            }
+            else
+            {
+                _content.anchoredPosition = targetPos;
+            }
         }
     }
 }
